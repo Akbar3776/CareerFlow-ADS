@@ -8,6 +8,11 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost:5432/careerflow'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+#Setup Database GUNAKAN VIRTUAL ENVIRONMENT
+#1. Buat virtual environment: python -m venv venv
+#2. Aktifkan virtual environment:   - Windows: venv\Scripts\activate
+#                                   - macOS/Linux: source venv/bin/activate
+
     db.init_app(app)
     app.register_blueprint(api)
 
