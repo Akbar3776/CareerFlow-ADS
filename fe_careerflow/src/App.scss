@@ -1,0 +1,395 @@
+/* =============================================
+   CAREERFLOW — Shared Auth Layout Styles
+   ============================================= */
+
+/* ---- Navbar ---- */
+.cf-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 56px;
+  background: var(--cf-white);
+  border-bottom: 1px solid var(--cf-border);
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+
+  &__logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cf-blue-light);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ---- Auth Wrapper ---- */
+.cf-auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 40px;
+  background-color: var(--cf-bg);
+}
+
+/* ---- Auth Card ---- */
+.cf-auth-card {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  min-height: 480px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 8px 48px rgba(10, 31, 68, 0.12);
+  background: var(--cf-white);
+}
+
+/* ---- Left Panel (Image/Illustration) ---- */
+.cf-auth-left {
+  flex: 1;
+  min-width: 300px;
+  background: linear-gradient(145deg, #1a3f8f 0%, #0d2d6e 60%, #061a4a 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 40px 36px;
+  position: relative;
+  overflow: hidden;
+
+  /* Placeholder area for user's image */
+  .cf-auth-left__image-slot {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      opacity: 0.85;
+    }
+
+    /* Subtle grid pattern overlay when no image */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+  }
+
+  /* Gradient overlay on top of image */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10, 31, 68, 0.15) 0%,
+      rgba(10, 31, 68, 0.6) 70%,
+      rgba(10, 31, 68, 0.85) 100%
+    );
+    pointer-events: none;
+  }
+
+  &__text {
+    position: relative;
+    z-index: 2;
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--cf-white);
+      line-height: 1.2;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.6;
+      font-weight: 400;
+    }
+  }
+}
+
+/* ---- Right Panel (Form) ---- */
+.cf-auth-right {
+  flex: 1;
+  padding: 48px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--cf-navy);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+
+  &__subtitle {
+    font-size: 0.875rem;
+    color: var(--cf-muted);
+    margin-bottom: 32px;
+    font-weight: 400;
+  }
+}
+
+/* ---- Form Fields ---- */
+.cf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cf-navy);
+    letter-spacing: 0.01em;
+  }
+
+  &__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .cf-field__icon {
+      position: absolute;
+      left: 14px;
+      color: var(--cf-muted);
+      font-size: 1rem;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .cf-field__eye {
+      position: absolute;
+      right: 14px;
+      color: var(--cf-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+
+      &:hover { color: var(--cf-blue-light); }
+    }
+
+    input {
+      width: 100%;
+      height: 46px;
+      border: 1.5px solid var(--cf-border);
+      border-radius: var(--radius);
+      padding: 0 14px 0 42px;
+      font-size: 0.875rem;
+      color: var(--cf-text);
+      background: #f7f9fc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+
+      &::placeholder {
+        color: #b0bac9;
+        font-weight: 400;
+      }
+
+      &:focus {
+        border-color: var(--cf-blue-light);
+        background: var(--cf-white);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      &.has-error {
+        border-color: var(--cf-error);
+        box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+      }
+
+      &.has-right-icon {
+        padding-right: 42px;
+      }
+    }
+  }
+
+  &__error {
+    font-size: 0.78rem;
+    color: var(--cf-error);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  &__hint {
+    font-size: 0.78rem;
+    color: var(--cf-success);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+}
+
+/* ---- Remember / Forgot row ---- */
+.cf-form__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -4px;
+
+  .cf-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--cf-blue-light);
+      cursor: pointer;
+    }
+
+    span {
+      font-size: 0.82rem;
+      color: var(--cf-muted);
+    }
+  }
+
+  .cf-forgot-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cf-blue-light);
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover { opacity: 0.75; }
+  }
+}
+
+/* ---- Primary Button ---- */
+.cf-btn-primary {
+  width: 100%;
+  height: 50px;
+  background: var(--cf-navy);
+  color: var(--cf-white);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  margin-top: 4px;
+
+  &:hover {
+    background: var(--cf-blue);
+    box-shadow: 0 4px 20px rgba(10, 31, 68, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .cf-btn-arrow {
+    font-size: 1.1rem;
+  }
+}
+
+/* ---- Footer Link ---- */
+.cf-auth-footer {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 0.85rem;
+  color: var(--cf-muted);
+
+  a, .cf-link {
+    color: var(--cf-blue-light);
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover { opacity: 0.75; }
+  }
+}
+
+/* ---- OTP Input ---- */
+.cf-otp-wrap {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 8px 0;
+
+  input {
+    width: 52px;
+    height: 58px;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--cf-navy);
+    border: 1.5px solid var(--cf-border);
+    border-radius: var(--radius);
+    background: #f7f9fc;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: var(--font-main);
+
+    &:focus {
+      border-color: var(--cf-blue-light);
+      background: var(--cf-white);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+}
+
+.cf-otp-hint {
+  font-size: 0.82rem;
+  color: var(--cf-muted);
+  text-align: center;
+  margin-top: -6px;
+
+  span {
+    color: var(--cf-blue-light);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover { opacity: 0.75; }
+  }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 680px) {
+  .cf-auth-left {
+    display: none;
+  }
+
+  .cf-auth-right {
+    padding: 40px 28px;
+  }
+
+  .cf-auth-card {
+    min-height: unset;
+  }
+}

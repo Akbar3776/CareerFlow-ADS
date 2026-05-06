@@ -1,0 +1,59 @@
+/* =============================================
+   CAREERFLOW — Global Styles
+   ============================================= */
+
+:root {
+  /* Colors */
+  --cf-navy:       #0a1f44;
+  --cf-blue:       #1a3f8f;
+  --cf-blue-mid:   #1e50b5;
+  --cf-blue-light: #2563eb;
+  --cf-bg:         #f0f4fa;
+  --cf-white:      #ffffff;
+  --cf-text:       #0a1f44;
+  --cf-muted:      #6b7a99;
+  --cf-border:     #d4dce8;
+  --cf-error:      #e53e3e;
+  --cf-success:    #22c55e;
+
+  /* Typography — Europa Grotesk SH fallback stack */
+  --font-main: 'Europa Grotesk SH', 'Barlow', 'DM Sans', sans-serif;
+
+  /* Spacing */
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--cf-bg);
+  color: var(--cf-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+input, button {
+  font-family: var(--font-main);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
