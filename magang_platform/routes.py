@@ -2,10 +2,10 @@
 from flask import Blueprint, request, jsonify
 from models import db, Admin, Mahasiswa, LowonganMagang, Lamaran
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+# PERUBAHAN: Menambahkan 'get_jwt' untuk mengambil 'additional_claims'
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 
 api = Blueprint('api', __name__)
-
 
 # ==========================================
 # AUTENTIKASI: Sign Up & Login
@@ -35,23 +35,23 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    # Cek di tabel Admin terlebih dahulu
     user = Admin.query.filter_by(email=email).first()
     role = 'admin'
     user_id = user.idAdmin if user else None
     
-    # Jika tidak ada di Admin, cek di tabel Mahasiswa
     if not user:
         user = Mahasiswa.query.filter_by(email=email).first()
         role = 'mahasiswa'
         user_id = user.nim if user else None
 
-    # Verifikasi keberadaan user dan kecocokan password
     if not user or not check_password_hash(user.password, password):
         return jsonify({"message": "Email atau password salah"}), 401
 
-    # Buat Access Token yang berisi ID pengguna dan peran (role) mereka
-    access_token = create_access_token(identity={'id': user_id, 'role': role})
+    # PERUBAHAN: Memisahkan identity sebagai string, dan role di additional_claims
+    access_token = create_access_token(
+        identity=str(user_id), 
+        additional_claims={'role': role}
+    )
     return jsonify({"access_token": access_token, "role": role}), 200
 
 # ==========================================
@@ -61,17 +61,17 @@ def login():
 @api.route('/admin/lowongan', methods=['POST'])
 @jwt_required()
 def add_lowongan():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'admin': # AUTHORISASI: Hanya boleh admin
+    claims = get_jwt() # Mengambil additional_claims
+    if claims.get('role') != 'admin':
         return jsonify({"message": "Akses ditolak, khusus admin"}), 403
-    
+
     data = request.json
     new_lowongan = LowonganMagang(
         posisi=data['posisi'],
         deskripsi=data['deskripsi'],
         kategori=data['kategori'],
         kuota=data['kuota'],
-        idAdmin=current_user['id'] # Diambil langsung dari token, bukan dari request body
+        idAdmin=get_jwt_identity() # Identity langsung berisi string ID User
     )
     db.session.add(new_lowongan)
     db.session.commit()
@@ -80,10 +80,10 @@ def add_lowongan():
 @api.route('/admin/lowongan/<id>', methods=['PUT'])
 @jwt_required()
 def update_lowongan(id):
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'admin':
+    claims = get_jwt()
+    if claims.get('role') != 'admin':
         return jsonify({"message": "Akses ditolak, khusus admin"}), 403
-    
+
     data = request.json
     lowongan = LowonganMagang.query.get(id)
     if not lowongan:
@@ -100,10 +100,10 @@ def update_lowongan(id):
 @api.route('/admin/lowongan/<id>', methods=['DELETE'])
 @jwt_required()
 def hapus_lowongan(id):
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'admin':
+    claims = get_jwt()
+    if claims.get('role') != 'admin':
         return jsonify({"message": "Akses ditolak, khusus admin"}), 403
-    
+
     lowongan = LowonganMagang.query.get(id)
     if not lowongan:
         return jsonify({"message": "Lowongan tidak ditemukan"}), 404
@@ -157,15 +157,15 @@ def detail_lowongan(id):
 @api.route('/lamaran', methods=['POST'])
 @jwt_required()
 def kirim_lamaran():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'mahasiswa': # AUTHORISASI: Hanya mahasiswa yang bisa melamar
+    claims = get_jwt()
+    if claims.get('role') != 'mahasiswa':
         return jsonify({"message": "Hanya mahasiswa yang dapat mengirim lamaran"}), 403
-    
+
     data = request.json
     new_lamaran = Lamaran(
         dokumenCV=data['dokumenCV'],
         idLowongan=data['idLowongan'],
-        nimMahasiswa=current_user['id'] # NIM Didapatkan dari token
+        nimMahasiswa=get_jwt_identity()
     )
     db.session.add(new_lamaran)
     db.session.commit()
@@ -175,15 +175,15 @@ def kirim_lamaran():
 # MAHASISWA: Dashboard Tracking
 # ==========================================
 
-@api.route('/mahasiswa/<nim>/dashboard', methods=['GET'])
+@api.route('/mahasiswa/dashboard', methods=['GET'])
 @jwt_required()
-def akses_dashboard(nim):
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'mahasiswa':
+def akses_dashboard():
+    claims = get_jwt()
+    if claims.get('role') != 'mahasiswa':
         return jsonify({"message": "Akses ditolak"}), 403
-    
-    # Gunakan NIM dari token untuk memastikan mahasiswa hanya bisa melihat dashboard mereka sendiri
-    daftar_lamaran = Lamaran.query.filter_by(nimMahasiswa=current_user['id']).all()
+
+    current_user_id = get_jwt_identity()
+    daftar_lamaran = Lamaran.query.filter_by(nimMahasiswa=current_user_id).all()
     if not daftar_lamaran:
         return jsonify({"message": "Dashboard kosong"}), 200
         
@@ -198,17 +198,16 @@ def akses_dashboard(nim):
 @api.route('/lamaran/<id>/status', methods=['PUT'])
 @jwt_required()
 def update_status_manual(id):
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'mahasiswa':
+    claims = get_jwt()
+    if claims.get('role') != 'mahasiswa':
         return jsonify({"message": "Akses ditolak"}), 403
-    
+
     data = request.json
     lamaran = Lamaran.query.get(id)
     if not lamaran:
         return jsonify({"message": "Lamaran tidak ditemukan"}), 404
     
-    # Validasi bahwa lamaran yang diupdate benar-benar milik mahasiswa tersebut
-    if lamaran.nimMahasiswa != current_user['id']:
+    if lamaran.nimMahasiswa != get_jwt_identity():
         return jsonify({"message": "Anda tidak memiliki akses ke lamaran ini"}), 403
         
     lamaran.statusLamaran = data.get('statusLamaran', lamaran.statusLamaran)
