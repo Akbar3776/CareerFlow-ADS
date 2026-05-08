@@ -1,29 +1,89 @@
 # routes.py
 from flask import Blueprint, request, jsonify
 from models import db, Admin, Mahasiswa, LowonganMagang, Lamaran
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 api = Blueprint('api', __name__)
 
+
 # ==========================================
-# ADMIN: Mengelola Lowongan
+# AUTENTIKASI: Sign Up & Login
+# ==========================================
+
+@api.route('/signup', methods=['POST'])
+def signup_mahasiswa():
+    data = request.json
+    if Mahasiswa.query.filter_by(email=data['email']).first() or Mahasiswa.query.filter_by(nim=data['nim']).first():
+        return jsonify({"message": "Email atau NIM sudah terdaftar"}), 400
+    
+    hashed_password = generate_password_hash(data['password'])
+    new_mahasiswa = Mahasiswa(
+        nama=data['nama'],
+        email=data['email'],
+        password=hashed_password,
+        nim=data['nim'],
+        programStudi=data['programStudi']
+    )
+    db.session.add(new_mahasiswa)
+    db.session.commit()
+    return jsonify({"message": "Akun mahasiswa berhasil dibuat", "nim": new_mahasiswa.nim}), 201
+
+@api.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    # Cek di tabel Admin terlebih dahulu
+    user = Admin.query.filter_by(email=email).first()
+    role = 'admin'
+    user_id = user.idAdmin if user else None
+    
+    # Jika tidak ada di Admin, cek di tabel Mahasiswa
+    if not user:
+        user = Mahasiswa.query.filter_by(email=email).first()
+        role = 'mahasiswa'
+        user_id = user.nim if user else None
+
+    # Verifikasi keberadaan user dan kecocokan password
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"message": "Email atau password salah"}), 401
+
+    # Buat Access Token yang berisi ID pengguna dan peran (role) mereka
+    access_token = create_access_token(identity={'id': user_id, 'role': role})
+    return jsonify({"access_token": access_token, "role": role}), 200
+
+# ==========================================
+# ADMIN: Mengelola Lowongan (Khusus Admin)
 # ==========================================
 
 @api.route('/admin/lowongan', methods=['POST'])
+@jwt_required()
 def add_lowongan():
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'admin': # AUTHORISASI: Hanya boleh admin
+        return jsonify({"message": "Akses ditolak, khusus admin"}), 403
+    
     data = request.json
     new_lowongan = LowonganMagang(
         posisi=data['posisi'],
         deskripsi=data['deskripsi'],
         kategori=data['kategori'],
         kuota=data['kuota'],
-        idAdmin=data['idAdmin']
+        idAdmin=current_user['id'] # Diambil langsung dari token, bukan dari request body
     )
     db.session.add(new_lowongan)
     db.session.commit()
     return jsonify({"message": "Lowongan berhasil ditambahkan", "idLowongan": new_lowongan.idLowongan}), 201
 
 @api.route('/admin/lowongan/<id>', methods=['PUT'])
+@jwt_required()
 def update_lowongan(id):
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'admin':
+        return jsonify({"message": "Akses ditolak, khusus admin"}), 403
+    
     data = request.json
     lowongan = LowonganMagang.query.get(id)
     if not lowongan:
@@ -38,7 +98,12 @@ def update_lowongan(id):
     return jsonify({"message": "Lowongan berhasil diupdate"}), 200
 
 @api.route('/admin/lowongan/<id>', methods=['DELETE'])
+@jwt_required()
 def hapus_lowongan(id):
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'admin':
+        return jsonify({"message": "Akses ditolak, khusus admin"}), 403
+    
     lowongan = LowonganMagang.query.get(id)
     if not lowongan:
         return jsonify({"message": "Lowongan tidak ditemukan"}), 404
@@ -90,12 +155,17 @@ def detail_lowongan(id):
     }), 200
 
 @api.route('/lamaran', methods=['POST'])
+@jwt_required()
 def kirim_lamaran():
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'mahasiswa': # AUTHORISASI: Hanya mahasiswa yang bisa melamar
+        return jsonify({"message": "Hanya mahasiswa yang dapat mengirim lamaran"}), 403
+    
     data = request.json
     new_lamaran = Lamaran(
         dokumenCV=data['dokumenCV'],
         idLowongan=data['idLowongan'],
-        nimMahasiswa=data['nimMahasiswa']
+        nimMahasiswa=current_user['id'] # NIM Didapatkan dari token
     )
     db.session.add(new_lamaran)
     db.session.commit()
@@ -106,8 +176,14 @@ def kirim_lamaran():
 # ==========================================
 
 @api.route('/mahasiswa/<nim>/dashboard', methods=['GET'])
+@jwt_required()
 def akses_dashboard(nim):
-    daftar_lamaran = Lamaran.query.filter_by(nimMahasiswa=nim).all()
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'mahasiswa':
+        return jsonify({"message": "Akses ditolak"}), 403
+    
+    # Gunakan NIM dari token untuk memastikan mahasiswa hanya bisa melihat dashboard mereka sendiri
+    daftar_lamaran = Lamaran.query.filter_by(nimMahasiswa=current_user['id']).all()
     if not daftar_lamaran:
         return jsonify({"message": "Dashboard kosong"}), 200
         
@@ -120,11 +196,20 @@ def akses_dashboard(nim):
     } for l in daftar_lamaran]), 200
 
 @api.route('/lamaran/<id>/status', methods=['PUT'])
+@jwt_required()
 def update_status_manual(id):
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'mahasiswa':
+        return jsonify({"message": "Akses ditolak"}), 403
+    
     data = request.json
     lamaran = Lamaran.query.get(id)
     if not lamaran:
         return jsonify({"message": "Lamaran tidak ditemukan"}), 404
+    
+    # Validasi bahwa lamaran yang diupdate benar-benar milik mahasiswa tersebut
+    if lamaran.nimMahasiswa != current_user['id']:
+        return jsonify({"message": "Anda tidak memiliki akses ke lamaran ini"}), 403
         
     lamaran.statusLamaran = data.get('statusLamaran', lamaran.statusLamaran)
     db.session.commit()

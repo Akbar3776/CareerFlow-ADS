@@ -2,11 +2,16 @@
 from flask import Flask
 from models import db
 from routes import api
+from flask_jwt_extended import JWTManager
 
 def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost:5432/careerflow'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Tambahkan Secret Key untuk JWT (ganti dengan string acak yang lebih kuat di tahap produksi)
+    app.config['JWT_SECRET_KEY'] = 'Fauzan-Hani-Ibnu-Projek-CareerFlow'
+
 
 #Setup Database GUNAKAN VIRTUAL ENVIRONMENT
 #1. Buat virtual environment: python -m venv venv
@@ -14,6 +19,8 @@ def create_app():
 #                                   - macOS/Linux: source venv/bin/activate
 
     db.init_app(app)
+    jwt = JWTManager(app) # Inisialisasi JWT
+    
     app.register_blueprint(api)
 
     with app.app_context():
