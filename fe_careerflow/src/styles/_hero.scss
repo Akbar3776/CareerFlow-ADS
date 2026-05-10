@@ -1,0 +1,189 @@
+/* =============================================
+   CAREERFLOW — Hero Section
+   ============================================= */
+
+.db-hero {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 280px;
+  background-color: var(--cf-hero-bg);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 48px 36px;
+
+  /* ---- Background motif image slot ---- */
+  &__bg-image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      opacity: 0.35;
+    }
+  }
+
+  /* ---- Geometric shapes (always visible) ---- */
+  &__shapes {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+
+    /* Large dark square top-left */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      left: -20px;
+      width: 200px;
+      height: 200px;
+      background: rgba(1, 2, 60, 0.55);
+      transform: rotate(12deg);
+    }
+
+    /* Triangle top-left accent */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 80px;
+      width: 0;
+      height: 0;
+      border-left: 70px solid transparent;
+      border-right: 0px solid transparent;
+      border-bottom: 120px solid rgba(26, 63, 143, 0.55);
+    }
+  }
+
+  /* Extra shapes via SVG overlay */
+  &__svg-shapes {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  /* ---- Bottom content row ---- */
+  &__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  /* ---- Welcome text ---- */
+  &__welcome {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    white-space: nowrap;
+
+    &-static {
+      color: var(--cf-welcome-yellow);
+    }
+
+    &-name {
+      background: linear-gradient(
+        to right,
+        var(--cf-welcome-grad-l),
+        var(--cf-welcome-grad-r)
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  /* ---- Controls (filter + search) ---- */
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  &__btn {
+    height: 44px;
+    padding: 0 20px;
+    background: var(--cf-btn-surface);
+    border: none;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cf-btn-text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: box-shadow 0.2s;
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+
+    svg {
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    &.open svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__search-input {
+    height: 44px;
+    padding: 0 16px 0 40px;
+    background: var(--cf-btn-surface);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--cf-btn-text);
+    outline: none;
+    min-width: 160px;
+    transition: box-shadow 0.2s;
+
+    &::placeholder {
+      color: var(--cf-btn-text);
+      opacity: 0.7;
+    }
+
+    &:focus {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+  }
+
+  &__search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .db-hero__search-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--cf-btn-text);
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+  }
+}

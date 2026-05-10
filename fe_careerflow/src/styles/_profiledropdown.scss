@@ -1,0 +1,45 @@
+/* =============================================
+   CAREERFLOW — Profile Dropdown
+   ============================================= */
+
+.db-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 200px;
+  background: var(--cf-white);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(10, 31, 68, 0.14);
+  overflow: hidden;
+  z-index: 300;
+
+  /* entry animation */
+  animation: dropdownIn 0.18s ease;
+
+  &__item {
+    display: block;
+    width: 100%;
+    padding: 16px 22px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cf-navy);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--cf-bg);
+    }
+
+    & + & {
+      border-top: 1px solid var(--cf-border);
+    }
+  }
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,108 @@
+/* =============================================
+   CAREERFLOW — Navbar (Dashboard)
+   ============================================= */
+
+.db-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 80px;
+  background: var(--cf-white);
+  border-bottom: 1px solid var(--cf-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+
+  &__logo {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--cf-navy);
+    letter-spacing: -0.02em;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  &__profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 10px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--cf-bg);
+    }
+  }
+
+  &__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--cf-blue-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* fallback initials */
+    &--placeholder {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cf-blue), var(--cf-blue-mid));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cf-white);
+    }
+  }
+
+  &__userinfo {
+    text-align: left;
+
+    &-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--cf-navy);
+      line-height: 1.2;
+    }
+
+    &-role {
+      font-size: 0.72rem;
+      color: var(--cf-muted);
+      font-weight: 400;
+    }
+  }
+
+  &__chevron {
+    color: var(--cf-muted);
+    display: flex;
+    align-items: center;
+    transition: transform 0.25s ease;
+
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+}

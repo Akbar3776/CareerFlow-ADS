@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 // SVG Icons inline (no extra library needed)
 const IconUser = () => (
@@ -40,19 +40,31 @@ export default function LoginPage() {
     return e
   }
 
+// di dalam component:
+  const navigate = useNavigate()
+
+
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const e2 = validate()
     if (Object.keys(e2).length) { setErrors(e2); return }
     setLoading(true)
-    // TODO: hubungkan ke backend autentikasi
-    setTimeout(() => setLoading(false), 1500)
+
+    // TODO: ganti dengan API call autentikasi backend
+    await new Promise(r => setTimeout(r, 1500))
+    setLoading(false)
+
+
+
+    navigate('/dashboard')  // ← tambah ini
   }
 
   const handleChange = (field) => (e) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
     setErrors(prev => ({ ...prev, [field]: '' }))
   }
+
 
   return (
     <>

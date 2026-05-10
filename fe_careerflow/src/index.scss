@@ -3,24 +3,42 @@
    ============================================= */
 
 :root {
-  /* Colors */
-  --cf-navy:       #0a1f44;
-  --cf-blue:       #1a3f8f;
-  --cf-blue-mid:   #1e50b5;
-  --cf-blue-light: #2563eb;
-  --cf-bg:         #f0f4fa;
-  --cf-white:      #ffffff;
-  --cf-text:       #0a1f44;
-  --cf-muted:      #6b7a99;
-  --cf-border:     #d4dce8;
-  --cf-error:      #e53e3e;
-  --cf-success:    #22c55e;
+  /* Colors — Auth */
+  --cf-navy:        #0a1f44;
+  --cf-blue:        #1a3f8f;
+  --cf-blue-mid:    #1e50b5;
+  --cf-blue-light:  #2563eb;
+  --cf-bg:          #f0f4fa;
+  --cf-white:       #ffffff;
+  --cf-text:        #0a1f44;
+  --cf-muted:       #6b7a99;
+  --cf-border:      #d4dce8;
+  --cf-error:       #e53e3e;
+  --cf-success:     #22c55e;
+
+  /* Colors — Dashboard */
+  --cf-hero-bg:         #03045E;
+  --cf-btn-surface:     #FBFCFF;
+  --cf-btn-text:        #37404E;
+  --cf-welcome-yellow:  #FFFECB;
+  --cf-welcome-grad-l:  #DFFAFF;
+  --cf-welcome-grad-r:  #BCECF6;
+  --cf-rec-grad-l:      #070A61;
+  --cf-rec-grad-r:      #2A408D;
+  --cf-badge-intern-bg: #88E0F2;
+  --cf-badge-intern-tx: #004C5C;
+  --cf-badge-mt-bg:     #B7B8EB;
+  --cf-badge-mt-tx:     #2022DF;
+  --cf-card-grad-l:     #C9D7EA;
+  --cf-card-grad-r:     #FBFCFF;
+  --cf-card-stroke:     #97A5BA;
+  --cf-card-radius:     25px;
 
   /* Typography — Europa Grotesk SH fallback stack */
   --font-main: 'Europa Grotesk SH', 'Barlow', 'DM Sans', sans-serif;
 
   /* Spacing */
-  --radius: 10px;
+  --radius:    10px;
   --radius-lg: 16px;
 }
 

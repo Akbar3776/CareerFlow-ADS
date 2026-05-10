@@ -1,8 +1,17 @@
-/* =============================================
-   CAREERFLOW — Shared Auth Layout Styles
-   ============================================= */
+@use './styles/navbar';
+@use './styles/hero';
+@use './styles/jobcard';
+@use './styles/jobdetail';
+@use './styles/filterdropdown';
+@use './styles/profiledropdown';
+@use './styles/footer';
 
-/* ---- Navbar ---- */
+
+// =============================================
+// AUTH STYLES — Login, Signup, Forgot Password
+// =============================================
+
+/* ---- Navbar Auth ---- */
 .cf-navbar {
   position: fixed;
   top: 0;
@@ -46,7 +55,7 @@
   background: var(--cf-white);
 }
 
-/* ---- Left Panel (Image/Illustration) ---- */
+/* ---- Left Panel ---- */
 .cf-auth-left {
   flex: 1;
   min-width: 300px;
@@ -58,7 +67,6 @@
   position: relative;
   overflow: hidden;
 
-  /* Placeholder area for user's image */
   .cf-auth-left__image-slot {
     position: absolute;
     inset: 0;
@@ -75,7 +83,6 @@
       opacity: 0.85;
     }
 
-    /* Subtle grid pattern overlay when no image */
     &::before {
       content: '';
       position: absolute;
@@ -87,7 +94,6 @@
     }
   }
 
-  /* Gradient overlay on top of image */
   &::after {
     content: '';
     position: absolute;
@@ -123,7 +129,7 @@
   }
 }
 
-/* ---- Right Panel (Form) ---- */
+/* ---- Right Panel ---- */
 .cf-auth-right {
   flex: 1;
   padding: 48px 48px;
@@ -393,3 +399,4 @@
     min-height: unset;
   }
 }
+
