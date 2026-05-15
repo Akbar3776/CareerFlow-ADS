@@ -1,19 +1,13 @@
-/* =============================================
-   CAREERFLOW — Hero Section
-   ============================================= */
-
 .db-hero {
   position: relative;
   z-index: 10;
   width: 100%;
   height: 280px;
   background-color: var(--cf-hero-bg);
-  overflow: hidden;
   display: flex;
   align-items: flex-end;
   padding: 0 48px 36px;
 
-  /* ---- Background motif image slot ---- */
   &__bg-image {
     position: absolute;
     inset: 0;
@@ -24,58 +18,10 @@
       height: 100%;
       object-fit: cover;
       object-position: center;
-      opacity: 0.35;
+      opacity: 1 ; // naikin opacity biar shapes dari bg.png keliatan jelas
     }
   }
 
-  /* ---- Geometric shapes (always visible) ---- */
-  &__shapes {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    overflow: hidden;
-
-    /* Large dark square top-left */
-    &::before {
-      content: '';
-      position: absolute;
-      top: -30px;
-      left: -20px;
-      width: 200px;
-      height: 200px;
-      background: rgba(1, 2, 60, 0.55);
-      transform: rotate(12deg);
-    }
-
-    /* Triangle top-left accent */
-    &::after {
-      content: '';
-      position: absolute;
-      top: 10px;
-      left: 80px;
-      width: 0;
-      height: 0;
-      border-left: 70px solid transparent;
-      border-right: 0px solid transparent;
-      border-bottom: 120px solid rgba(26, 63, 143, 0.55);
-    }
-  }
-
-  /* Extra shapes via SVG overlay */
-  &__svg-shapes {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-
-    svg {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  /* ---- Bottom content row ---- */
   &__content {
     position: relative;
     z-index: 2;
@@ -86,11 +32,9 @@
     gap: 16px;
   }
 
-  /* ---- Welcome text ---- */
   &__welcome {
     font-size: 2.6rem;
     font-weight: 800;
-    letter-spacing: -0.03em;
     line-height: 1.1;
     white-space: nowrap;
 
@@ -110,12 +54,12 @@
     }
   }
 
-  /* ---- Controls (filter + search) ---- */
   &__controls {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    overflow: visible;
   }
 
   &__btn {

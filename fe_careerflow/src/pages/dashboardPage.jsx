@@ -140,7 +140,7 @@ export default function DashboardPage() {
       />
 
       {/* Job List */}
-      <div className="db-joblist">
+      <div className="db-joblist" style={{ isolation: 'auto' }}>
         {filteredJobs.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--cf-muted)', padding: '40px 0' }}>
             Tidak ada lowongan yang sesuai.

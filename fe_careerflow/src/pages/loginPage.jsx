@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import iniorg from "../assets/p.png"
 
 // SVG Icons inline (no extra library needed)
 const IconUser = () => (
@@ -79,10 +80,10 @@ export default function LoginPage() {
           {/* ---- LEFT PANEL ---- */}
           <div className="cf-auth-left">
             <div className="cf-auth-left__image-slot">
-              {/*
-                TARUH GAMBAR KAMU DI SINI:
-                <img src="/src/assets/login-illustration.png" alt="CareerFlow" />
-              */}
+              {
+                // GAMBAR :
+                < img src = {iniorg} alt="CareerFlow" className="cf-auth-left__image" />
+              }
             </div>
             <div className="cf-auth-left__text">
               <h2>Empowering Your Career Journey</h2>
