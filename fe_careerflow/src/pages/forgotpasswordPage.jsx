@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import api from '../api';
 import { Link } from 'react-router-dom'
 
 const IconMail = () => (
@@ -41,15 +42,21 @@ export default function ForgotPasswordPage() {
 
   /* ---- Step 1: Send OTP to email ---- */
   const handleSendOtp = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-      setErrors({ email: 'Masukkan email yang valid.' }); return
+      setErrors({ email: 'Masukkan email yang valid.' }); return;
     }
-    setLoading(true)
-    // TODO: POST /api/forgot-password/send-otp { email }
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false)
-    setStep('otp')
+    setLoading(true);
+    try {
+      const res = await api.post('/forgot-password/send-otp', { email });
+      setLoading(false);
+      setStep('otp');
+      setErrors({});
+      alert(res.data.message);
+    } catch (err) {
+      setLoading(false);
+      setErrors({ email: err.response?.data?.message || 'Gagal mengirim OTP' });
+    }
   }
 
   /* ---- OTP input ---- */
@@ -68,30 +75,41 @@ export default function ForgotPasswordPage() {
 
   /* ---- Step 2: Verify OTP ---- */
   const handleVerifyOtp = async (e) => {
-    e.preventDefault()
-    if (otp.join('').length < 6) { setErrors({ otp: 'Masukkan 6 digit kode OTP.' }); return }
-    setLoading(true)
-    // TODO: POST /api/forgot-password/verify-otp { email, otp }
-    await new Promise(r => setTimeout(r, 1000))
-    setLoading(false)
-    setErrors({})
-    setStep('reset')
+    e.preventDefault();
+    if (otp.join('').length < 6) { setErrors({ otp: 'Masukkan 6 digit kode OTP.' }); return; }
+    setLoading(true);
+    try {
+      const res = await api.post('/forgot-password/verify-otp', { email, otp: otp.join('') });
+      setLoading(false);
+      setErrors({});
+      setStep('reset');
+      alert(res.data.message);
+    } catch (err) {
+      setLoading(false);
+      setErrors({ otp: err.response?.data?.message || 'OTP salah' });
+    }
   }
+  
 
   /* ---- Step 3: Reset password ---- */
   const handleResetPassword = async (e) => {
-    e.preventDefault()
-    const errs = {}
-    if (newPass.length < 8) errs.newPass = 'Kata sandi minimal 8 karakter.'
-    if (newPass !== confPass) errs.confPass = 'Konfirmasi kata sandi tidak cocok.'
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    setLoading(true)
-    // TODO: POST /api/forgot-password/reset { email, newPassword: newPass }
-    await new Promise(r => setTimeout(r, 1000))
-    setLoading(false)
-    setStep('done')
+    e.preventDefault();
+    const errs = {};
+    if (newPass.length < 8) errs.newPass = 'Kata sandi minimal 8 karakter.';
+    if (newPass !== confPass) errs.confPass = 'Konfirmasi kata sandi tidak cocok.';
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setLoading(true);
+    try {
+      const res = await api.post('/forgot-password/reset', { email, newPassword: newPass, otp: otp.join('') });
+      setLoading(false);
+      setStep('done');
+      alert(res.data.message);
+    } catch (err) {
+      setLoading(false);
+      setErrors({ newPass: err.response?.data?.message || 'Gagal reset password' });
+    }
   }
-
+      
   return (
     <>
       <nav className="cf-navbar">

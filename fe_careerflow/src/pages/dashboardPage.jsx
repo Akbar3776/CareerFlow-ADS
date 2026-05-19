@@ -1,112 +1,78 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
 import JobCard from '../components/JobCard.jsx'
 import JobDetail from '../components/JobDetail.jsx'
 
-/* -------------------------------------------------------
-   SAMPLE DATA — nanti diganti dengan fetch dari backend
-------------------------------------------------------- */
-const SAMPLE_JOBS = [
-  {
-    id: 1,
-    title: 'Business Development Manager',
-    company: 'PT Antam Tbk',
-    dateRange: '27 Oktober – 11 November (2026)',
-    type: 'internship',
-    location: 'South Tangerang, Banten',
-    salary: 'Rp 1.000.000 – Rp 1.500.000',
-    logoUrl: '',
-    applyUrl: 'https://antam.com',
-    workType: 'On-site',
-    employmentType: 'Full-time',
-    duration: '3 Weeks',
-    postedLabel: '2 days ago',
-    about: 'We are looking for a passionate Product Design Intern to join our growing design team. You will be working closely with senior designers, product managers, and engineers to craft user-centric experiences for our core platform. This is a hands-on role where you will contribute to real projects that impact our users directly.',
-    responsibilities: [
-      'Assist in creating wireframes, prototypes, and high-fidelity mockups.',
-      'Participate in user research and usability testing sessions.',
-      'Collaborate with engineering teams to ensure design implementation meets quality standards.',
-      'Maintain and update the existing design system components.',
-    ],
-  },
-  {
-    id: 2,
-    title: 'Business Development Executive (Entry-Level / Fresh Graduates Welcome)',
-    company: 'PT Shopee International Indonesia',
-    dateRange: '07 Januari – 20 Februari (2026)',
-    type: 'mt',
-    location: 'South Jakarta, Jakarta',
-    salary: 'Rp 2.000.000 – Rp 3.000.000',
-    logoUrl: '',
-    applyUrl: 'https://shopee.co.id',
-    workType: 'On-site',
-    employmentType: 'Full-time',
-    duration: '6 Weeks',
-    postedLabel: '5 days ago',
-    about: 'Join Shopee as a Management Trainee in Business Development. You will be part of a fast-paced team driving growth in one of Southeast Asia\'s leading e-commerce platforms.',
-    responsibilities: [
-      'Identify and develop new business opportunities.',
-      'Manage relationships with key partners and vendors.',
-      'Analyze market trends and propose strategic initiatives.',
-      'Present findings to senior management regularly.',
-    ],
-  },
-  {
-    id: 3,
-    title: 'Risk Analyst',
-    company: 'Koperasi Astra International',
-    dateRange: '20 Juni – 20 Juli (2026)',
-    type: 'internship',
-    location: 'North Jakarta, Jakarta',
-    salary: 'Rp 200.000 – 800.000',
-    logoUrl: '',
-    applyUrl: 'https://astra.co.id',
-    workType: 'On-site',
-    employmentType: 'Internship',
-    duration: '4 Weeks',
-    postedLabel: '1 week ago',
-    about: 'Support the risk management team in identifying, assessing, and monitoring operational and financial risks across Koperasi Astra\'s business units.',
-    responsibilities: [
-      'Collect and analyze risk data from various business units.',
-      'Prepare risk assessment reports for management review.',
-      'Assist in developing risk mitigation strategies.',
-      'Monitor compliance with internal policies and procedures.',
-    ],
-  },
-  {
-    id: 4,
-    title: 'Data Analyst Staff – Digital Teknova Indonesia (DTI)',
-    company: 'PT Kapal Api Global',
-    dateRange: '20 Januari – 27 Januari (2026)',
-    type: 'internship',
-    location: 'Kota Bogor, Bogor',
-    salary: 'Rp 200.000 – 800.000',
-    logoUrl: '',
-    applyUrl: 'https://kapalapi.co.id',
-    workType: 'Hybrid',
-    employmentType: 'Full-time',
-    duration: '2 Weeks',
-    postedLabel: '3 days ago',
-    about: 'Join the DTI team at Kapal Api Global to support data-driven decision making across the organization. You will work with large datasets and build dashboards to surface key business insights.',
-    responsibilities: [
-      'Clean, transform, and analyze structured and unstructured data.',
-      'Build and maintain dashboards using BI tools.',
-      'Collaborate with business units to define KPIs and metrics.',
-      'Present data findings in clear, actionable formats.',
-    ],
-  },
-]
-
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen]         = useState(false)
   const [filterOpen, setFilterOpen]           = useState(false)
   const [selectedFilters, setSelectedFilters] = useState([])
   const [searchQuery, setSearchQuery]         = useState('')
   const [activeJob, setActiveJob]             = useState(null)
 
+  // --- States for Backend Fetching ---
+  const [jobs, setJobs] = useState([])
+  const [currentUser, setCurrentUser] = useState({ name: 'Loading...', role: '' }) // <-- New State
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+// --- Fetch Data from Backend ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token'); 
+        
+        // Scenario 1: No token found in localStorage. Redirect immediately.
+        if (!token) {
+          navigate('/login'); 
+          return; // Stop execution
+        }
+        
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        // Fetch User Profile
+        const profileRes = await fetch('http://localhost:5001/profile', { headers });
+        
+        // Scenario 2: Token is expired or invalid (Backend returns 401 or 403)
+        if (profileRes.status === 401 || profileRes.status === 422 || profileRes.status === 403) {
+          console.error("Sesi telah habis. Mengalihkan ke halaman login...");
+          localStorage.removeItem('token'); // Clear the bad token
+          navigate('/login');               // Redirect to login page
+          return;
+        }
+
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setCurrentUser(profileData);
+        } else {
+          throw new Error('Gagal mengambil profil pengguna');
+        }
+
+        // Fetch Jobs
+        const jobsRes = await fetch('http://localhost:5001/lowongan', { headers });
+        if (!jobsRes.ok) throw new Error('Gagal mengambil data lowongan');
+        
+        const jobsData = await jobsRes.json();
+        setJobs(jobsData);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [navigate]); // <-- Add navigate to dependency array
+
   /* Filter + search logic */
-  const filteredJobs = SAMPLE_JOBS.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     const matchSearch = searchQuery === '' ||
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.toLowerCase().includes(searchQuery.toLowerCase())
@@ -122,15 +88,16 @@ export default function DashboardPage() {
 
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh', background: 'var(--cf-bg)' }}>
-
+      {/* Pass dynamic user data here */}
       <Navbar
-        user={{ name: 'Andi Nasution', role: 'Member' }}
+        user={currentUser} 
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
       />
 
+      {/* Pass dynamic user name here */}
       <Hero
-        userName="Andi Nasution"
+        userName={currentUser.name} 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         filterOpen={filterOpen}
@@ -141,7 +108,15 @@ export default function DashboardPage() {
 
       {/* Job List */}
       <div className="db-joblist" style={{ isolation: 'auto' }}>
-        {filteredJobs.length === 0 ? (
+        {isLoading ? (
+          <p style={{ textAlign: 'center', color: 'var(--cf-muted)', padding: '40px 0' }}>
+            Memuat dashboard...
+          </p>
+        ) : error ? (
+          <p style={{ textAlign: 'center', color: 'red', padding: '40px 0' }}>
+            Error: {error}
+          </p>
+        ) : filteredJobs.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--cf-muted)', padding: '40px 0' }}>
             Tidak ada lowongan yang sesuai.
           </p>
@@ -156,19 +131,16 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Footer */}
       <footer className="db-footer">
         © 2026 CareerFlow Professional Network. All rights reserved.
       </footer>
 
-      {/* Job Detail Panel */}
       {activeJob && (
         <JobDetail
           job={activeJob}
           onClose={() => setActiveJob(null)}
         />
       )}
-
     </div>
   )
 }

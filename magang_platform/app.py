@@ -1,15 +1,17 @@
 # app.py
-from flask import Flask
+from flask import Flask, app
 from models import db
 from routes import api
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
+from flask_cors import CORS
 
 load_dotenv()
 
 def create_app():
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3001"}}, supports_credentials=True)
 # Tambahkan konfigurasi database dan JWT dari environment variables
 # Buat file .env di root project dengan isi:
 # DATABASE_URL=postgresql://username:password@localhost:5432/nama_database
