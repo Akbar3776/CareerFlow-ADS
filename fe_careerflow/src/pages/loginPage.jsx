@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import api from '../api';
 import iniorg from "../assets/p.png"
 
 // SVG Icons inline (no extra library needed)
@@ -34,6 +35,8 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const [errors, setErrors]     = useState({})
 
+  const navigate = useNavigate()
+
   const validate = () => {
     const e = {}
     if (!form.email.trim())    e.email    = 'Email atau username wajib diisi.'
@@ -41,31 +44,56 @@ export default function LoginPage() {
     return e
   }
 
-// di dalam component:
-  const navigate = useNavigate()
-
-
-
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const e2 = validate()
-    if (Object.keys(e2).length) { setErrors(e2); return }
-    setLoading(true)
+    e.preventDefault();
+    const e2 = validate();
+    if (Object.keys(e2).length) { setErrors(e2); return; }
+    
+    setLoading(true);
+    
+    try {
+      // 1. Explicitly setting headers to ensure Flask parses the JSON safely
+      // 2. Make sure the endpoint matches your Flask setup. 
+      // If your api.js baseURL is 'http://localhost:5001' and your blueprint uses url_prefix='/api', change this to '/api/login'
+      const res = await api.post('/login', {
+        email: form.email,
+        password: form.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-    // TODO: ganti dengan API call autentikasi backend
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
+      setLoading(false);
+      
+      // Save data to localStorage
+      localStorage.setItem('token', res.data.access_token);
+      localStorage.setItem('role', res.data.role);
+      
+      // Update default headers for future Axios requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access_token}`;
+      
+      // Redirect based on role (optional but recommended!)
+      if (res.data.role === 'admin') {
+        navigate('/admin/dashboard'); // Change to your actual admin route
+      } else {
+        navigate('/dashboard');
+      }
 
-
-
-    navigate('/dashboard')  // ← tambah ini
+    } catch (err) {
+      setLoading(false);
+      console.error("Detail Error Login:", err); // <-- Helps debug 500 errors in browser console
+      
+      // If Flask crashes (500), err.response.data might not exist. This fallback prevents React from crashing too.
+      const errorMessage = err.response?.data?.message || 'Terjadi kesalahan pada server (500). Cek terminal Flask Anda.';
+      setErrors({ password: errorMessage });
+    }
   }
 
   const handleChange = (field) => (e) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
     setErrors(prev => ({ ...prev, [field]: '' }))
   }
-
 
   return (
     <>
@@ -80,10 +108,7 @@ export default function LoginPage() {
           {/* ---- LEFT PANEL ---- */}
           <div className="cf-auth-left">
             <div className="cf-auth-left__image-slot">
-              {
-                // GAMBAR :
-                < img src = {iniorg} alt="CareerFlow" className="cf-auth-left__image" />
-              }
+              <img src={iniorg} alt="CareerFlow" className="cf-auth-left__image" />
             </div>
             <div className="cf-auth-left__text">
               <h2>Empowering Your Career Journey</h2>

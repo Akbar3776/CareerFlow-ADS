@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import api from '../api';
 
 /* ---- Icons ---- */
 const IconUser = () => (
@@ -36,14 +37,16 @@ export default function SignUpPage() {
 
   // Step: 'form' | 'otp'
   const [step, setStep]   = useState('form')
-  const [form, setForm]   = useState({ username: '', email: '', password: '', confirm: '' })
+  const [form, setForm]   = useState({ username: '', email: '', password: '', confirm: '', nim: '', programStudi: '' })
   const [otp, setOtp]     = useState(['', '', '', '', '', ''])
   const [showPass, setShowPass]     = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [checkingUser, setCheckingUser] = useState(false)
+  const [checkingNIM, setCheckingNIM] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'taken' | 'ok'
+  const [nimStatus, setNimStatus] = useState(null) // null | 'taken' | 'ok'
 
   /* ---- Username uniqueness check ---- */
   const checkUsername = async (value) => {
@@ -58,6 +61,19 @@ export default function SignUpPage() {
     else setErrors(prev => ({ ...prev, username: '' }))
   }
 
+  /* ---- NIM uniqueness check ---- */
+  const checkNIM = async (value) => {
+    if (!value || value.length < 3) { setNimStatus(null); return }
+    setCheckingNIM(true)
+    // Simulasi API delay — ganti dengan: const res = await fetch(`/api/check-nim?n=${value}`)
+    await new Promise(r => setTimeout(r, 600))
+    const taken = TAKEN_USERNAMES.includes(value.toLowerCase())
+    setNimStatus(taken ? 'taken' : 'ok')
+    setCheckingNIM(false)
+    if (taken) setErrors(prev => ({ ...prev, nim: 'NIM already in use, choose another NIM.' }))
+    else setErrors(prev => ({ ...prev, nim: '' }))
+  }
+
   const handleChange = (field) => (e) => {
     const val = e.target.value
     setForm(prev => ({ ...prev, [field]: val }))
@@ -65,6 +81,10 @@ export default function SignUpPage() {
     if (field === 'username') {
       setUsernameStatus(null)
       if (val.length >= 3) checkUsername(val)
+    }
+    if (field === 'nim') {
+      setNimStatus(null)
+      if (val.length >= 3) checkNIM(val)
     }
   }
 
@@ -84,15 +104,19 @@ export default function SignUpPage() {
 
   /* ---- Submit form → send OTP ---- */
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    setLoading(true)
-    // TODO: hit API → POST /api/signup/send-otp { email: form.email }
-    // Simulasi kirim OTP
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false)
-    setStep('otp')
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setLoading(true);
+    try {
+      await api.post('/signup/send-otp', { email: form.email });
+      setLoading(false);
+      setStep('otp');
+      alert('OTP telah dikirim ke email Anda.');
+    } catch (err) {
+      setLoading(false);
+      setErrors({ email: err.response?.data?.message || 'Gagal mengirim OTP' });
+    }
   }
 
   /* ---- OTP input handling ---- */
@@ -112,17 +136,29 @@ export default function SignUpPage() {
     }
   }
 
-  /* ---- Verify OTP ---- */
+  /* ---- Verify OTP and register ---- */
   const handleVerifyOtp = async (e) => {
-    e.preventDefault()
-    const code = otp.join('')
-    if (code.length < 6) { setErrors({ otp: 'Masukkan 6 digit kode OTP.' }); return }
-    setLoading(true)
-    // TODO: hit API → POST /api/signup/verify-otp { email: form.email, otp: code }
-    await new Promise(r => setTimeout(r, 1000))
-    setLoading(false)
-    // Berhasil → redirect ke login
-    navigate('/login')
+    e.preventDefault();
+    const code = otp.join('');
+    if (code.length < 6) { setErrors({ otp: 'Masukkan 6 digit kode OTP.' }); return; }
+    setLoading(true);
+    try {
+      await api.post('/signup/verify-otp', { email: form.email, otp: code });
+      // If OTP valid, register user
+      await api.post('/signup', {
+        nama: form.username,
+        email: form.email,
+        password: form.password,
+        nim: form.nim,
+        programStudi: form.programStudi
+      });
+      setLoading(false);
+      alert('Akun berhasil dibuat!');
+      navigate('/login');
+    } catch (err) {
+      setLoading(false);
+      setErrors({ otp: err.response?.data?.message || 'OTP salah atau pendaftaran gagal' });
+    }
   }
 
   const handleResend = async () => {
@@ -186,6 +222,40 @@ export default function SignUpPage() {
                       <span className="cf-field__hint">✓ Username tersedia</span>
                     )}
                     {errors.username && <span className="cf-field__error">{errors.username}</span>}
+                  </div>
+
+                  {/* NIM */}
+                  <div className="cf-field">
+                    <label>NIM</label>
+                    <div className="cf-field__input-wrap">
+                      <input
+                        type="text"
+                        placeholder="Masukkan NIM"
+                        value={form.nim}
+                        onChange={handleChange('nim')}
+                        className={errors.nim ? 'has-error' : ''}
+                      />
+                    </div>
+                    {checkingNIM && <span className="cf-field__hint" style={{color:'var(--cf-muted)'}}>Memeriksa NIM...</span>}
+                    {!checkingNIM && nimStatus === 'ok' && !errors.nim && (
+                      <span className="cf-field__hint">✓ NIM  tersedia</span>
+                    )}
+                    {errors.nim && <span className="cf-field__error">{errors.nim}</span>}
+                  </div>
+
+                  {/* Program Studi */}
+                  <div className="cf-field">
+                    <label>Program Studi</label>
+                    <div className="cf-field__input-wrap">
+                      <input
+                        type="text"
+                        placeholder="Masukkan Program Studi"
+                        value={form.programStudi}
+                        onChange={handleChange('programStudi')}
+                        className={errors.programStudi ? 'has-error' : ''}
+                      />
+                    </div>
+                    {errors.programStudi && <span className="cf-field__error">{errors.programStudi}</span>}
                   </div>
 
                   {/* Email */}
