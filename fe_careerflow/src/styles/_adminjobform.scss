@@ -1,0 +1,329 @@
+/* =============================================
+   CAREERFLOW — Admin Job Form
+   ============================================= */
+
+.ajf-wrapper {
+  min-height: 100vh;
+  background: var(--cf-bg);
+  padding-top: 80px;
+}
+
+.ajf-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* ---- Breadcrumb ---- */
+.ajf-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--cf-muted);
+  margin-bottom: 20px;
+
+  &__link {
+    color: var(--cf-blue-light);
+    cursor: pointer;
+    font-weight: 600;
+    &:hover { opacity: 0.75; }
+  }
+
+  &__sep { color: var(--cf-muted); }
+  &__current { color: var(--cf-text); font-weight: 500; }
+}
+
+/* ---- Header ---- */
+.ajf-header {
+  margin-bottom: 32px;
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--cf-navy);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+
+  &__sub {
+    font-size: 0.875rem;
+    color: var(--cf-muted);
+  }
+}
+
+/* ---- Form ---- */
+.ajf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ---- Section ---- */
+.ajf-section {
+  display: flex;
+  gap: 40px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--cf-border);
+
+  &__left {
+    width: 200px;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--cf-blue-light);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+
+  &__desc {
+    font-size: 0.78rem;
+    color: var(--cf-muted);
+    line-height: 1.5;
+  }
+
+  &__right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+/* ---- Field ---- */
+.ajf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--row {
+    flex-direction: row;
+    gap: 16px;
+    align-items: flex-end;
+  }
+
+  &__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cf-navy);
+    letter-spacing: 0.02em;
+  }
+
+  &__optional {
+    font-weight: 400;
+    color: var(--cf-muted);
+    font-size: 0.75rem;
+  }
+
+  &__input {
+    height: 44px;
+    border: 1.5px solid var(--cf-border);
+    border-radius: var(--radius);
+    padding: 0 14px;
+    font-size: 0.875rem;
+    color: var(--cf-text);
+    background: var(--cf-white);
+    outline: none;
+    font-family: var(--font-main);
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+
+    &::placeholder {
+      color: #b0bac9;
+      letter-spacing: 0.02em;
+    }
+
+    &:focus {
+      border-color: var(--cf-blue-light);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    &:disabled {
+      background: var(--cf-bg);
+      color: var(--cf-muted);
+      cursor: not-allowed;
+    }
+  }
+
+  &__select {
+    height: 44px;
+    border: 1.5px solid var(--cf-border);
+    border-radius: var(--radius);
+    padding: 0 14px;
+    font-size: 0.875rem;
+    color: var(--cf-text);
+    background: var(--cf-white);
+    outline: none;
+    font-family: var(--font-main);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    width: 100%;
+
+    &:focus {
+      border-color: var(--cf-blue-light);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+
+  &__textarea {
+    border: 1.5px solid var(--cf-border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 0.875rem;
+    color: var(--cf-text);
+    background: var(--cf-white);
+    outline: none;
+    font-family: var(--font-main);
+    letter-spacing: 0.02em;
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+
+    &::placeholder { color: #b0bac9; }
+
+    &:focus {
+      border-color: var(--cf-blue-light);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+
+  /* Autocomplete */
+  &__autocomplete {
+    position: relative;
+  }
+
+  &__suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--cf-white);
+    border: 1.5px solid var(--cf-border);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 16px rgba(10, 31, 68, 0.1);
+    z-index: 50;
+    list-style: none;
+    padding: 4px 0;
+    max-height: 180px;
+    overflow-y: auto;
+
+    li {
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--cf-text);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+
+      &:hover {
+        background: var(--cf-bg);
+        color: var(--cf-blue-light);
+      }
+    }
+  }
+
+  /* Company with logo */
+  &__company-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__company-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid var(--cf-border);
+    flex-shrink: 0;
+  }
+
+  /* Logo upload */
+  &__upload-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__logo-preview {
+    width: 80px;
+    height: 48px;
+    object-fit: contain;
+    border: 1.5px solid var(--cf-border);
+    border-radius: 8px;
+  }
+
+  &__logo-empty {
+    width: 80px;
+    height: 48px;
+    border: 1.5px dashed var(--cf-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: var(--cf-muted);
+  }
+
+  &__upload-btn {
+    height: 36px;
+    padding: 0 18px;
+    background: var(--cf-white);
+    border: 1.5px solid var(--cf-blue-light);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cf-blue-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(37, 99, 235, 0.06); }
+  }
+}
+
+/* ---- Actions ---- */
+.ajf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 32px;
+
+  &__btn {
+    height: 44px;
+    padding: 0 28px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, box-shadow 0.2s;
+
+    &--back {
+      background: var(--cf-white);
+      border: 1.5px solid var(--cf-border);
+      color: var(--cf-navy);
+
+      &:hover {
+        background: var(--cf-bg);
+        box-shadow: 0 2px 8px rgba(10,31,68,0.08);
+      }
+    }
+
+    &--save {
+      background: var(--cf-navy);
+      border: none;
+      color: var(--cf-white);
+
+      &:hover {
+        background: var(--cf-blue);
+        box-shadow: 0 4px 16px rgba(10,31,68,0.2);
+      }
+    }
+  }
+}

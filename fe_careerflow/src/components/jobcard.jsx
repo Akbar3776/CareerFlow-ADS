@@ -1,4 +1,4 @@
-export default function JobCard({ job, onDetail }) {
+export default function JobCard({ job, onDetail, isAdmin = false, onEdit, onHapus }) {
   const handleDaftar = () => {
     if (job.applyUrl) {
       window.open(job.applyUrl, '_blank', 'noopener noreferrer')
@@ -37,12 +37,25 @@ export default function JobCard({ job, onDetail }) {
         )}
 
         <div className="db-jobcard__actions">
-          <button className="db-jobcard__btn db-jobcard__btn--daftar" onClick={handleDaftar}>
-            Daftar
-          </button>
-          <button className="db-jobcard__btn db-jobcard__btn--detail" onClick={() => onDetail(job)}>
-            Detail
-          </button>
+          {isAdmin ? (
+            <>
+              <button className="db-jobcard__btn db-jobcard__btn--edit" onClick={() => onEdit(job)}>
+                ✏ Edit
+              </button>
+              <button className="db-jobcard__btn db-jobcard__btn--hapus" onClick={() => onHapus(job)}>
+                🗑 Hapus
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="db-jobcard__btn db-jobcard__btn--daftar" onClick={handleDaftar}>
+                Daftar
+              </button>
+              <button className="db-jobcard__btn db-jobcard__btn--detail" onClick={() => onDetail(job)}>
+                Detail
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
