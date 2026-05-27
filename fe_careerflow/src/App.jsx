@@ -6,6 +6,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import AdminDashboardPage from './pages/admindashboardPage.jsx'
 import adminjobformpage from './pages/adminjobformPage.jsx'
+import TrackingPage from './pages/TrackingPage.jsx'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/dashboard"       element={<DashboardPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/admin/job-form"  element={<AdminJobFormPage />} />
+        <Route path="/tracking"        element={<TrackingPage />} />
       </Routes>
     </BrowserRouter>
   )
