@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PlusCircle, CheckCircle } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
 import JobCard from '../components/JobCard.jsx'
 import JobDetail from '../components/JobDetail.jsx'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 
 
 /* -------------------------------------------------------
@@ -108,6 +110,9 @@ export default function AdminDashboardPage() {
   const [searchQuery, setSearchQuery]         = useState('')
   const [activeJob, setActiveJob]             = useState(null)
   const [jobs, setJobs]                       = useState(SAMPLE_JOBS) // ← pakai state biar bisa hapus
+  const [confirmJob, setConfirmJob]   = useState(null)  // job yang mau dihapus
+  const [toast, setToast]             = useState(false)  // notif sukses
+
 
   const filteredJobs = jobs.filter(job => {
     const matchSearch = searchQuery === '' ||
@@ -121,21 +126,30 @@ export default function AdminDashboardPage() {
     return matchSearch && matchFilter
   })
 
+  const showToast = () => {
+    setToast(true)
+    setTimeout(() => setToast(false), 3000)
+  }
+
   const handleHapus = (job) => {
-    if (window.confirm(`Hapus "${job.title}"?`)) {
-      setJobs(prev => prev.filter(j => j.id !== job.id))
-    }
+    setConfirmJob(job)  // buka modal
   }
 
   const handleEdit = (job) => {
     navigate(`/admin/edit-job/${job.id}`)
   }
 
-  return (
+  const handleConfirmHapus = () => {
+    setJobs(prev => prev.filter(j => j.id !== confirmJob.id))
+    setConfirmJob(null)
+    showToast()
+  }
+  
+return (
     <div style={{ paddingTop: '80px', minHeight: '100vh', background: 'var(--cf-bg)' }}>
 
       <Navbar
-        user={{ name: 'Andi Nasution', role: 'Admin' }} // ← ganti role
+        user={{ name: 'Andi Nasution', role: 'Admin' }}
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
       />
@@ -150,26 +164,27 @@ export default function AdminDashboardPage() {
         setSelectedFilters={setSelectedFilters}
       />
 
-      {/* Tambah Magang button — taruh di sini, sebelum db-joblist */}
+      {/* Tambah Magang button */}
       <div style={{ maxWidth: '860px', margin: '24px auto 0', padding: '0 24px', display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={() => navigate('/admin/add-job')}
           style={{
             height: '40px',
             padding: '0 20px',
-            background: 'var(--cf-blue-light)',
+            background: '#000459',
             color: '#fff',
             borderRadius: '10px',
-            fontWeight: '700',
+            fontWeight: '500',
             fontSize: '0.875rem',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
           }}
         >
-          + Tambah Magang
+          <PlusCircle size={16} />
+          Add new job
         </button>
       </div>
 
@@ -184,7 +199,7 @@ export default function AdminDashboardPage() {
             <JobCard
               key={job.id}
               job={job}
-              isAdmin={true}        // ← ini bedanya
+              isAdmin={true}
               onEdit={handleEdit}
               onHapus={handleHapus}
             />
@@ -196,9 +211,38 @@ export default function AdminDashboardPage() {
         © 2026 CareerFlow Professional Network. All rights reserved.
       </footer>
 
-      {activeJob && (
-        <JobDetail job={activeJob} onClose={() => setActiveJob(null)} />
+      {/* Toast notif */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '32px',
+          right: '32px',
+          background: '#0a1f44',
+          color: '#fff',
+          padding: '14px 24px',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          boxShadow: '0 8px 32px rgba(10,31,68,0.2)',
+          zIndex: 400,
+          letterSpacing: '0.02em',
+        }}>
+          <CheckCircle size={18} color="#22c55e" />
+          Lowongan berhasil dihapus
+        </div>
       )}
+
+      {/* Confirm Modal */}
+      {confirmJob && (
+        <ConfirmModal
+          onConfirm={handleConfirmHapus}
+          onCancel={() => setConfirmJob(null)}
+        />
+      )}
+
     </div>
   )
 }

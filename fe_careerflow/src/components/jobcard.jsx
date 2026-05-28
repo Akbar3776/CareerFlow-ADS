@@ -1,3 +1,5 @@
+import { Pencil, Trash2 } from 'lucide-react'
+
 export default function JobCard({ job, onDetail, isAdmin = false, onEdit, onHapus }) {
   const handleDaftar = () => {
     if (job.applyUrl) {
@@ -40,10 +42,12 @@ export default function JobCard({ job, onDetail, isAdmin = false, onEdit, onHapu
           {isAdmin ? (
             <>
               <button className="db-jobcard__btn db-jobcard__btn--edit" onClick={() => onEdit(job)}>
-                ✏ Edit
+                <Pencil size={14} style={{ marginRight: 6 }} />
+                Edit
               </button>
               <button className="db-jobcard__btn db-jobcard__btn--hapus" onClick={() => onHapus(job)}>
-                🗑 Hapus
+                <Trash2 size={14} style={{ marginRight: 6 }} />
+                Hapus
               </button>
             </>
           ) : (

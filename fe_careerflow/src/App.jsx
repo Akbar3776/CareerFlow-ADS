@@ -5,7 +5,7 @@ import SignUpPage from './pages/SignUpPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import AdminDashboardPage from './pages/admindashboardPage.jsx'
-import adminjobformpage from './pages/adminjobformPage.jsx'
+import AdminJobFormPage from './pages/adminjobformPage.jsx'
 import TrackingPage from './pages/TrackingPage.jsx'
 
 export default function App() {
@@ -18,7 +18,8 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/dashboard"       element={<DashboardPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/admin/job-form"  element={<AdminJobFormPage />} />
+        <Route path="/admin/add-job"      element={<AdminJobFormPage />} />
+        <Route path="/admin/edit-job/:id" element={<AdminJobFormPage />} />
         <Route path="/tracking"        element={<TrackingPage />} />
       </Routes>
     </BrowserRouter>

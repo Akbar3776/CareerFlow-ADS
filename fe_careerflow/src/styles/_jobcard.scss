@@ -42,6 +42,7 @@
     color: var(--cf-navy);
     line-height: 1.3;
     margin-bottom: 4px;
+    letter-spacing: 0.01em;
   }
 
   &__company {
@@ -71,7 +72,7 @@
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: 0.02em;
 
     &--internship {
@@ -142,6 +143,10 @@
     background: var(--cf-white);
     color: var(--cf-navy);
     transition: background 0.15s, box-shadow 0.15s;
+    display: flex;           // tambah
+    align-items: center;     // tambah
+    gap: 6px;                // tambah
+
 
     &:hover {
       background: var(--cf-bg);

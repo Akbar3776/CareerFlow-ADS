@@ -1,0 +1,79 @@
+.cfmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 31, 68, 0.45);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cfmodal {
+  background: var(--cf-white);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 8px 48px rgba(10, 31, 68, 0.18);
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    background: #fff0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;   // tambah
+    gap: 6px;          
+  }
+
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #070A61;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+  }
+
+  &__desc {
+    font-size: 0.875rem;
+    color: var(--cf-muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  &__btn {
+    height: 44px;
+    padding: 0 28px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, box-shadow 0.2s;
+
+    &--cancel {
+      background: var(--cf-white);
+      border: 1.5px solid var(--cf-border);
+      color: var(--cf-navy);
+      &:hover { background: var(--cf-bg); }
+    }
+
+    &--confirm {
+      background: #BA1A1A;
+      border: none;
+      color: white;
+      &:hover {
+        background: #BA1A1A;
+        box-shadow: 0 4px 16px rgba(229, 62, 62, 0.3);
+      }
+    }
+  }
+}

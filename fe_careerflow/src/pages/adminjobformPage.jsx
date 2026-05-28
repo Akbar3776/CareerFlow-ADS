@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import countryList from 'react-select-country-list'
+import { useMemo } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 const COUNTRIES = [
   'Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Philippines',
@@ -39,6 +42,9 @@ export default function AdminJobFormPage() {
   const [showCompanySug, setShowCompanySug] = useState(false)
   const [countryQuery, setCountryQuery] = useState('Indonesia')
   const [showCountrySug, setShowCountrySug] = useState(false)
+  const [periodOpen, setPeriodOpen] = useState(false)
+  const [countryOpen, setCountryOpen] = useState(false)
+  const [typeOpen, setTypeOpen] = useState(false)
 
   const handleChange = (field) => (e) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
@@ -62,6 +68,8 @@ export default function AdminJobFormPage() {
     console.log('Submit:', form)
     navigate('/admin/dashboard')
   }
+
+  const countryOptions = useMemo(() => countryList().getData(), [])
 
   return (
     <div className="ajf-wrapper">
@@ -228,15 +236,29 @@ export default function AdminJobFormPage() {
                 </div>
                 <div className="ajf-field" style={{ flexShrink: 0 }}>
                   <label className="ajf-field__label">Period</label>
-                  <select
-                    className="ajf-field__select"
-                    value={form.salaryPeriod}
-                    onChange={handleChange('salaryPeriod')}
-                  >
-                    {SALARY_PERIOD.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
+                  <div className="ajf-custom-select" onClick={() => setPeriodOpen(p => !p)}>
+                    <span className={form.salaryPeriod ? 'ajf-custom-select__value' : 'ajf-custom-select__placeholder'}>
+                      {form.salaryPeriod || 'Select...'}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`ajf-custom-select__arrow ${periodOpen ? 'open' : ''}`}
+                    />
+                    {periodOpen && (
+                      <ul className="ajf-custom-select__dropdown">
+                        {SALARY_PERIOD.map(p => (
+                          <li key={p}
+                            className={`ajf-custom-select__option ${form.salaryPeriod === p ? 'active' : ''}`}
+                            onMouseDown={() => {
+                              setForm(prev => ({ ...prev, salaryPeriod: p }))
+                              setPeriodOpen(false)
+                            }}>
+                            {p}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -260,31 +282,31 @@ export default function AdminJobFormPage() {
                     onChange={handleChange('city')}
                   />
                 </div>
-                <div className="ajf-field" style={{ flex: 1, position: 'relative' }}>
+                <div className="ajf-field" style={{ flex: 1 }}>
                   <label className="ajf-field__label">Country</label>
-                  <input
-                    className="ajf-field__input"
-                    type="text"
-                    placeholder="e.g. Indonesia"
-                    value={countryQuery}
-                    onChange={e => {
-                      setCountryQuery(e.target.value)
-                      setShowCountrySug(true)
-                    }}
-                    onFocus={() => setShowCountrySug(true)}
-                    onBlur={() => setTimeout(() => setShowCountrySug(false), 150)}
-                  />
-                  {showCountrySug && filteredCountries.length > 0 && (
-                    <ul className="ajf-field__suggestions">
-                      {filteredCountries.map((c, i) => (
-                        <li key={i} onMouseDown={() => {
-                          setCountryQuery(c)
-                          setForm(prev => ({ ...prev, country: c }))
-                          setShowCountrySug(false)
-                        }}>{c}</li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="ajf-custom-select" onClick={() => setCountryOpen(p => !p)}>
+                    <span className={form.country ? 'ajf-custom-select__value' : 'ajf-custom-select__placeholder'}>
+                      {form.country || 'Select country...'}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`ajf-custom-select__arrow ${countryOpen ? 'open' : ''}`}
+                    />
+                    {countryOpen && (
+                      <ul className="ajf-custom-select__dropdown ajf-custom-select__dropdown--scroll">
+                        {countryOptions.map(c => (
+                          <li key={c.value}
+                            className={`ajf-custom-select__option ${form.country === c.label ? 'active' : ''}`}
+                            onMouseDown={() => {
+                              setForm(prev => ({ ...prev, country: c.label }))
+                              setCountryOpen(false)
+                            }}>
+                            {c.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -300,21 +322,28 @@ export default function AdminJobFormPage() {
               <div className="ajf-field ajf-field--row">
                 <div className="ajf-field" style={{ flex: 1 }}>
                   <label className="ajf-field__label">Start Date</label>
-                  <input
-                    className="ajf-field__input"
-                    type="date"
-                    value={form.startDate}
-                    onChange={handleChange('startDate')}
-                  />
+                  <div className="ajf-field__date-box" onClick={() => document.getElementById('startDate').showPicker()}>
+                    <input
+                      id="startDate"
+                      className="ajf-field__input"
+                      type="date"
+                      value={form.startDate}
+                      onChange={handleChange('startDate')}
+                    />
+                  </div>
                 </div>
+
                 <div className="ajf-field" style={{ flex: 1 }}>
                   <label className="ajf-field__label">End Date</label>
-                  <input
-                    className="ajf-field__input"
-                    type="date"
-                    value={form.endDate}
-                    onChange={handleChange('endDate')}
-                  />
+                  <div className="ajf-field__date-box" onClick={() => document.getElementById('endDate').showPicker()}>
+                    <input
+                      id="endDate"
+                      className="ajf-field__input"
+                      type="date"
+                      value={form.endDate}
+                      onChange={handleChange('endDate')}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -329,14 +358,27 @@ export default function AdminJobFormPage() {
             <div className="ajf-section__right">
               <div className="ajf-field">
                 <label className="ajf-field__label">Type</label>
-                <select
-                  className="ajf-field__select"
-                  value={form.type}
-                  onChange={handleChange('type')}
-                >
-                  <option value="internship">Internship</option>
-                  <option value="mt">Management Trainee (MT)</option>
-                </select>
+                <div className="ajf-custom-select" onClick={() => setTypeOpen(p => !p)}>
+                  <span className="ajf-custom-select__value">
+                    {form.type === 'internship' ? 'Internship' : 'Management Trainee (MT)'}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`ajf-custom-select__arrow ${typeOpen ? 'open' : ''}`}
+                  />
+                  {typeOpen && (
+                    <ul className="ajf-custom-select__dropdown">
+                      <li className={`ajf-custom-select__option ${form.type === 'internship' ? 'active' : ''}`}
+                        onMouseDown={() => { setForm(prev => ({ ...prev, type: 'internship' })); setTypeOpen(false) }}>
+                        Internship
+                      </li>
+                      <li className={`ajf-custom-select__option ${form.type === 'mt' ? 'active' : ''}`}
+                        onMouseDown={() => { setForm(prev => ({ ...prev, type: 'mt' })); setTypeOpen(false) }}>
+                        Management Trainee (MT)
+                      </li>
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -365,7 +407,7 @@ export default function AdminJobFormPage() {
                 <textarea
                   className="ajf-field__textarea"
                   rows={4}
-                  placeholder="- Responsibility 1&#10;- Responsibility 2"
+                  placeholder="1.  Responsibility 1&#10;2. Responsibility 2"
                   value={form.responsibilities}
                   onChange={handleChange('responsibilities')}
                 />
@@ -378,7 +420,7 @@ export default function AdminJobFormPage() {
           <div className="ajf-actions">
             <button type="button" className="ajf-actions__btn ajf-actions__btn--back"
               onClick={() => navigate('/admin/dashboard')}>
-              Kemball
+              Kembali
             </button>
             <button type="submit" className="ajf-actions__btn ajf-actions__btn--save">
               Simpan
