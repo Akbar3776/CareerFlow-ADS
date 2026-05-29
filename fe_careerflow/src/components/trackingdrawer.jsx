@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Palette } from 'lucide-react'
 
 const DEFAULT_STATUSES = [
   { label: 'Applied', color: '#c7d2fe' },
@@ -7,7 +8,31 @@ const DEFAULT_STATUSES = [
   { label: 'Offered', color: '#bbf7d0' },
 ]
 
-function ColorPicker({ value, onChange }) {
+function getAutoTextColorFromHex(hex) {
+  if (!hex || hex.length < 7) return '#1e293b'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const rn = r / 255, gn = g / 255, bn = b / 255
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn)
+  let h = 0, s = 0, l = (max + min) / 2
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case rn: h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6; break
+      case gn: h = ((bn - rn) / d + 2) / 6; break
+      case bn: h = ((rn - gn) / d + 4) / 6; break
+    }
+  }
+  const hDeg = Math.round(h * 360)
+  const sPct = Math.round(s * 100)
+  const lPct = l * 100
+  const textL = lPct > 50 ? Math.max(15, lPct - 60) : Math.min(95, lPct + 60)
+  return `hsl(${hDeg}, ${sPct}%, ${textL}%)`
+}
+
+function ColorPicker({ value, onChange, presets = [] }) {
   const canvasRef = useRef(null)
   const stripRef = useRef(null)
   const [hue, setHue] = useState(220)
@@ -70,43 +95,52 @@ function ColorPicker({ value, onChange }) {
   }
 
   useEffect(() => {
-    const up = () => { draggingCanvas.current = false; draggingStrip.current = false }
+    const up = () => {
+      draggingCanvas.current = false
+      draggingStrip.current = false
+    }
+    const move = (e) => {
+      handleCanvasMove(e)
+      handleStripMove(e)
+    }
     window.addEventListener('mouseup', up)
-    window.addEventListener('mousemove', handleCanvasMove)
-    window.addEventListener('mousemove', handleStripMove)
+    window.addEventListener('mousemove', move)
     return () => {
       window.removeEventListener('mouseup', up)
-      window.removeEventListener('mousemove', handleCanvasMove)
-      window.removeEventListener('mousemove', handleStripMove)
+      window.removeEventListener('mousemove', move)
     }
   })
 
   return (
-    <div className="trkd-colorpicker">
+    <div className="trkd-colorpicker" onMouseDown={e => e.stopPropagation()}>
       <div className="trkd-colorpicker__header">
         <span className="trkd-colorpicker__label">Pick Color</span>
         <span className="trkd-colorpicker__hex">{value}</span>
       </div>
       <div className="trkd-colorpicker__canvas-wrap"
-        onMouseDown={e => { draggingCanvas.current = true; handleCanvasMove(e) }}>
-        <canvas ref={canvasRef} width={200} height={120}
-          className="trkd-colorpicker__canvas" />
+        onMouseDown={e => { e.stopPropagation(); draggingCanvas.current = true; handleCanvasMove(e) }}>
+        <canvas ref={canvasRef} width={200} height={120} className="trkd-colorpicker__canvas" />
         <div className="trkd-colorpicker__cursor" style={{
           left: `${pos.x * 100}%`,
           top: `${pos.y * 100}%`,
         }} />
       </div>
       <div className="trkd-colorpicker__strip-wrap"
-        onMouseDown={e => { draggingStrip.current = true; handleStripMove(e) }}>
+        onMouseDown={e => { e.stopPropagation(); draggingStrip.current = true; handleStripMove(e) }}>
         <div ref={stripRef} className="trkd-colorpicker__strip" />
         <div className="trkd-colorpicker__strip-cursor"
           style={{ left: `${(hue / 360) * 100}%` }} />
       </div>
       <div className="trkd-colorpicker__presets">
-        {['#c7d2fe','#bbf7d0','#bae6fd','#fef08a','#fca5a5','#e9d5ff','#0a1f44'].map(c => (
-          <div key={c} className="trkd-colorpicker__preset"
-            style={{ background: c, outline: value === c ? '2px solid #2563eb' : 'none' }}
-            onClick={() => onChange(c)} />
+        {presets.slice(0, 6).map((c, i) => (
+          <div key={i} className="trkd-colorpicker__preset"
+            style={{
+              background: c,
+              outline: value === c ? '2px solid #2563eb' : 'none',
+              outlineOffset: '2px',
+            }}
+            onMouseDown={e => { e.stopPropagation(); onChange(c) }}
+          />
         ))}
       </div>
     </div>
@@ -115,6 +149,7 @@ function ColorPicker({ value, onChange }) {
 
 export default function TrackingDrawer({ mode, job, onSave, onClose }) {
   const isAdd = mode === 'add'
+  const drawerRef = useRef(null)
 
   const [form, setForm] = useState({
     id: job?.id || null,
@@ -124,7 +159,10 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
     status: job?.status || 'Applied',
     type: job?.type || 'internship',
     workType: job?.workType || 'On-site',
-    statuses: job?.statuses || [...DEFAULT_STATUSES],
+    statuses: job?.statuses ? [...job.statuses] : [...DEFAULT_STATUSES],
+    currentStatusIdx: job?.statuses
+      ? Math.max(0, job.statuses.findIndex(s => s.label === job.status))
+      : 0,
   })
 
   const [newStatusLabel, setNewStatusLabel] = useState('')
@@ -132,11 +170,34 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [activeColorIdx, setActiveColorIdx] = useState(null)
 
+  // history: default 4 warna status + hitam putih
+  // update HANYA saat add status baru
+  const [colorHistory, setColorHistory] = useState([
+    '#c7d2fe', '#bbf7d0', '#bae6fd', '#fef08a', '#ffffff', '#1e293b'
+  ])
+
+  // close picker saat klik di luar drawer
+  useEffect(() => {
+    const handler = (e) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
+        setActiveColorIdx(null)
+        setShowColorPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
   const handleChange = (field) => (e) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }))
 
   const handleAddStatus = () => {
     if (!newStatusLabel.trim()) return
+    // update history HANYA di sini, saat add status
+    setColorHistory(prev => {
+      const filtered = prev.filter(c => c !== newStatusColor)
+      return [newStatusColor, ...filtered].slice(0, 6)
+    })
     setForm(prev => ({
       ...prev,
       statuses: [...prev.statuses, { label: newStatusLabel.trim(), color: newStatusColor }]
@@ -149,10 +210,12 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
   const handleRemoveStatus = (idx) => {
     setForm(prev => ({
       ...prev,
-      statuses: prev.statuses.filter((_, i) => i !== idx)
+      statuses: prev.statuses.filter((_, i) => i !== idx),
+      currentStatusIdx: Math.min(prev.currentStatusIdx, Math.max(0, prev.statuses.length - 2)),
     }))
   }
 
+  // fix: hanya update index yang dipilih
   const handleStatusColorChange = (idx, color) => {
     setForm(prev => ({
       ...prev,
@@ -160,20 +223,22 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
     }))
   }
 
-  const handleSubmit = () => {
-    onSave(form)
-  }
+  const handleSubmit = () => onSave(form)
 
   return (
-    <div className="trkd">
+    <div className="trkd" ref={drawerRef}>
       {/* Header */}
       <div className="trkd__header">
         <div>
-          <h2 className="trkd__title">{isAdd ? 'Add New Job Tracking' : form.position}</h2>
+          <h2 className="trkd__title">
+            {isAdd ? 'Add New Job Tracking' : form.position}
+          </h2>
           {!isAdd && (
             <div className="trkd__company-row">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
               </svg>
               <span>{form.company}</span>
             </div>
@@ -182,10 +247,12 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
         <button className="trkd__close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Badges row (edit only) */}
+      {/* Badges */}
       {!isAdd && (
         <div className="trkd__badges">
-          <span className="trkd__badge trkd__badge--type">{job?.type === 'mt' ? 'MT' : 'Internship'}</span>
+          <span className="trkd__badge trkd__badge--type">
+            {job?.type === 'mt' ? 'MT' : 'Internship'}
+          </span>
           <span className="trkd__badge trkd__badge--work">{job?.workType}</span>
           <span className="trkd__badge trkd__badge--status">{form.status}</span>
         </div>
@@ -210,13 +277,22 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
         {/* Date Applied */}
         <div className="trkd__field">
           <label className="trkd__label">Date Applied</label>
-          <div className="trkd__date-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          <div className="trkd__date-wrap"
+            onClick={() => document.getElementById('trkd-date').showPicker()}>
+            <input
+              id="trkd-date"
+              className={`trkd__input trkd__input--date${!form.dateApplied ? ' trkd__input--empty' : ''}`}
+              type="date"
+              value={form.dateApplied}
+              onChange={handleChange('dateApplied')}
+            />
+            <svg className="trkd__date-icon" width="15" height="15"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            <input className="trkd__input trkd__input--date" type="date"
-              value={form.dateApplied} onChange={handleChange('dateApplied')} />
           </div>
         </div>
 
@@ -224,40 +300,40 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
         <div className="trkd__field">
           <label className="trkd__label">Selection Progress Timeline</label>
           <div className="trkd__timeline">
-            {form.statuses.map((s, i) => {
-              const isDark = s.color === '#0a1f44' || s.color === '#1a3f8f'
-              return (
-                <div key={i} className="trkd__tag"
-                  style={{ background: s.color, color: isDark ? '#fff' : '#1e293b' }}>
-                  <span className="trkd__tag-palette"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setActiveColorIdx(activeColorIdx === i ? null : i)
-                    }}>🎨</span>
-                  {s.label}
-                  <span className="trkd__tag-remove" onClick={() => handleRemoveStatus(i)}>×</span>
-                  {activeColorIdx === i && (
-                    <div className="trkd__tag-picker" onClick={e => e.stopPropagation()}>
-                      <ColorPicker value={s.color}
-                        onChange={(c) => handleStatusColorChange(i, c)} />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {form.statuses.map((s, i) => (
+              <div key={i} className="trkd__tag"
+                style={{
+                  background: s.color,
+                  color: getAutoTextColorFromHex(s.color),
+                }}>
+                {s.label}
+                <span className="trkd__tag-remove"
+                  onClick={() => handleRemoveStatus(i)}>×</span>
+                {activeColorIdx === i && (
+                  <div className="trkd__tag-picker"
+                    onMouseDown={e => e.stopPropagation()}>
+                    <ColorPicker
+                      value={s.color}
+                      onChange={(c) => handleStatusColorChange(i, c)}
+                      presets={colorHistory}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Add new status */}
           <div className="trkd__add-status">
-            <button className="trkd__palette-btn"
-              onClick={() => setShowColorPicker(p => !p)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="8" cy="10" r="1.5" fill="currentColor"/>
-                <circle cx="12" cy="7" r="1.5" fill="currentColor"/>
-                <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
-                <path d="M12 17c-2 0-4-1-4-3h8c0 2-2 3-4 3z"/>
-              </svg>
+            <button
+              className="trkd__palette-btn"
+              onMouseDown={e => {
+                e.stopPropagation()
+                setShowColorPicker(p => !p)
+                setActiveColorIdx(null)
+              }}
+            >
+              <Palette size={16} />
             </button>
             <input
               className="trkd__status-input"
@@ -269,8 +345,13 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
             />
             <button className="trkd__add-btn" onClick={handleAddStatus}>+</button>
             {showColorPicker && (
-              <div className="trkd__new-picker">
-                <ColorPicker value={newStatusColor} onChange={setNewStatusColor} />
+              <div className="trkd__new-picker"
+                onMouseDown={e => e.stopPropagation()}>
+                <ColorPicker
+                  value={newStatusColor}
+                  onChange={setNewStatusColor}
+                  presets={colorHistory}
+                />
               </div>
             )}
           </div>
@@ -280,7 +361,9 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
 
       {/* Footer */}
       <div className="trkd__footer">
-        <button className="trkd__btn trkd__btn--cancel" onClick={onClose}>Cancel</button>
+        <button className="trkd__btn trkd__btn--cancel" onClick={onClose}>
+          Cancel
+        </button>
         <button className="trkd__btn trkd__btn--save" onClick={handleSubmit}>
           Update Tracking
         </button>
