@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+// adminjobformPage.jsx
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import countryList from 'react-select-country-list'
-import { useMemo } from 'react'
 import { ChevronDown } from 'lucide-react'
+import api from '../api' // Gunakan axios instance yang sudah ada
 
 const COUNTRIES = [
   'Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Philippines',
@@ -33,6 +34,10 @@ export default function AdminJobFormPage() {
     type: 'internship',
     about: '',
     responsibilities: '',
+    workType: 'On-site', // Ditambahkan karena backend meminta ini
+    employmentType: 'Full-time', // Ditambahkan karena backend meminta ini
+    duration: '3 Months', // Ditambahkan karena backend meminta ini
+    kuota: 1 // Ditambahkan karena backend meminta ini
   })
 
   const [logoPreview, setLogoPreview] = useState(null)
@@ -40,11 +45,75 @@ export default function AdminJobFormPage() {
   const [companyHistory] = useState(['PT Antam Tbk', 'PT Shopee International Indonesia', 'PT Kapal Api Global'])
   const [showTitleSug, setShowTitleSug] = useState(false)
   const [showCompanySug, setShowCompanySug] = useState(false)
-  const [countryQuery, setCountryQuery] = useState('Indonesia')
-  const [showCountrySug, setShowCountrySug] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
   const [typeOpen, setTypeOpen] = useState(false)
+  
+  // State untuk profile dan loading
+  const [userProfile, setUserProfile] = useState({ name: 'Loading...', role: 'Admin' })
+  const [isLoading, setIsLoading] = useState(isEdit)
+
+  // 1. Ambil Profil User & Data Lowongan (Jika Edit)
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      // Set auth header untuk axios
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      try {
+        // Ambil profil admin
+        const profileRes = await api.get('/profile')
+        setUserProfile({ 
+          name: profileRes.data.nama || profileRes.data.name || 'Admin', 
+          role: profileRes.data.role || 'Admin' 
+        })
+
+        // Jika mode edit, ambil data lowongan
+        if (isEdit) {
+          const jobRes = await api.get(`/lowongan/${id}`) // Perhatikan ini route public/magang
+          const jobData = jobRes.data
+          
+          // Pecah dateRange (Contoh: "20 Januari – 27 Januari (2026)") menjadi startDate & endDate
+          // Catatan: Ini adalah pemisahan sederhana, bisa disesuaikan dengan format DB Anda
+          setForm({
+            title: jobData.title || '',
+            company: jobData.company || '',
+            logoUrl: jobData.logoUrl || '',
+            applyUrl: jobData.applyUrl || '',
+            salary: jobData.salary || '',
+            salaryPeriod: 'per month', // Bisa disesuaikan
+            city: jobData.location ? jobData.location.split(',')[0].trim() : '',
+            country: 'Indonesia', 
+            startDate: '', // Harus di-parse jika DB menyimpan sebagai string range
+            endDate: '',   
+            type: jobData.type || 'internship',
+            about: jobData.about || '',
+            responsibilities: Array.isArray(jobData.responsibilities) ? jobData.responsibilities.join('\n') : (jobData.responsibilities || ''),
+            workType: jobData.workType || 'On-site',
+            employmentType: jobData.employmentType || 'Full-time',
+            duration: jobData.duration || '3 Months',
+            kuota: jobData.kuota || 1
+          })
+          
+          if (jobData.logoUrl) setLogoPreview(jobData.logoUrl)
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data awal:", err)
+        if (err.response?.status === 401) {
+          navigate('/login')
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchInitialData()
+  }, [id, isEdit, navigate])
 
   const handleChange = (field) => (e) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
@@ -53,28 +122,64 @@ export default function AdminJobFormPage() {
   const handleLogoUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
+    // Idealnya, file diupload ke Cloudinary/S3 lalu URL-nya disimpan di backend.
+    // Untuk saat ini, kita gunakan Base64 atau Blob URL (Blob URL tidak akan tersimpan di DB secara permanen)
     const url = URL.createObjectURL(file)
     setLogoPreview(url)
     setForm(prev => ({ ...prev, logoUrl: url }))
   }
 
-  const filteredCountries = COUNTRIES.filter(c =>
-    c.toLowerCase().includes(countryQuery.toLowerCase())
-  )
-
-  const handleSubmit = (e) => {
+  // 2. Submit Data (POST atau PUT)
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: kirim ke backend
-    console.log('Submit:', form)
-    navigate('/admin/dashboard')
+    
+    // Format data agar sesuai dengan validator backend Flask
+    const payload = {
+      title: form.title,
+      company: form.company,
+      // Gabungkan kota dan negara
+      location: `${form.city}, ${form.country}`,
+      // Gabungkan tanggal (bisa disesuaikan formatnya)
+      dateRange: form.startDate && form.endDate ? `${form.startDate} to ${form.endDate}` : 'TBA',
+      type: form.type,
+      salary: form.salaryPeriod === 'not listed' ? 'Not Listed' : `${form.salary} ${form.salaryPeriod}`,
+      logoUrl: form.logoUrl,
+      applyUrl: form.applyUrl,
+      workType: form.workType,
+      employmentType: form.employmentType,
+      duration: form.duration,
+      about: form.about,
+      // Ubah string multiline menjadi array
+      responsibilities: form.responsibilities.split('\n').filter(r => r.trim() !== ''),
+      kuota: form.kuota
+    }
+
+    try {
+      if (isEdit) {
+        // PUT /admin/lowongan/<id>
+        await api.put(`/admin/lowongan/${id}`, payload)
+        alert('Lowongan berhasil diperbarui!')
+      } else {
+        // POST /admin/lowongan
+        await api.post('/admin/lowongan', payload)
+        alert('Lowongan berhasil ditambahkan!')
+      }
+      navigate('/admin/dashboard')
+    } catch (err) {
+      console.error("Gagal menyimpan lowongan:", err)
+      const errorMsg = err.response?.data?.message || 'Terjadi kesalahan pada server.'
+      alert(`Gagal menyimpan: ${errorMsg}`)
+    }
   }
 
   const countryOptions = useMemo(() => countryList().getData(), [])
 
+  if (isLoading) return <div style={{ padding: '100px', textAlign: 'center' }}>Memuat data...</div>
+
   return (
     <div className="ajf-wrapper">
       <Navbar
-        user={{ name: 'Andi Nasution', role: 'Admin' }}
+        user={userProfile}
         profileOpen={false}
         setProfileOpen={() => {}}
       />
@@ -121,6 +226,7 @@ export default function AdminJobFormPage() {
                     }}
                     onFocus={() => setShowTitleSug(form.title.length > 0)}
                     onBlur={() => setTimeout(() => setShowTitleSug(false), 150)}
+                    required
                   />
                   {showTitleSug && (
                     <ul className="ajf-field__suggestions">
@@ -156,6 +262,7 @@ export default function AdminJobFormPage() {
                       }}
                       onFocus={() => setShowCompanySug(form.company.length > 0)}
                       onBlur={() => setTimeout(() => setShowCompanySug(false), 150)}
+                      required
                     />
                   </div>
                   {showCompanySug && (
@@ -399,6 +506,7 @@ export default function AdminJobFormPage() {
                   placeholder="Describe the role..."
                   value={form.about}
                   onChange={handleChange('about')}
+                  required
                 />
               </div>
 
