@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import AdminDashboardPage from './pages/admindashboardPage.jsx'
 import AdminJobFormPage from './pages/adminjobformPage.jsx'
 import TrackingPage from './pages/TrackingPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/admin/add-job"      element={<AdminJobFormPage />} />
         <Route path="/admin/edit-job/:id" element={<AdminJobFormPage />} />
         <Route path="/tracking"        element={<TrackingPage />} />
+        <Route path="/profile"         element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   )
