@@ -28,17 +28,26 @@ class AuthService:
         user = Admin.query.filter_by(email=email).first()
         role = 'admin'
         user_id = user.idAdmin if user else None
-        
+
         if not user:
             user = Mahasiswa.query.filter_by(email=email).first()
             role = 'mahasiswa'
             user_id = user.nim if user else None
 
-        if not user or not check_password_hash(user.password, password):
+        if not user:
             return None, None, "Email atau password salah"
 
+        if role == 'admin':
+            # Compare plain text for admin
+            if user.password != password:
+                return None, None, "Email atau password salah"
+        else:
+            # Use hash check for mahasiswa
+            if not check_password_hash(user.password, password):
+                return None, None, "Email atau password salah"
+
         access_token = create_access_token(
-            identity=str(user_id), 
+            identity=str(user_id),
             additional_claims={'role': role}
         )
         return access_token, role, None
