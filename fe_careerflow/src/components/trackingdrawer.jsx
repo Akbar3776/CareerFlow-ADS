@@ -1,14 +1,17 @@
+// trackingdrawer.jsx
 import { useState, useRef, useEffect } from 'react'
 import { Palette } from 'lucide-react'
 
 const DEFAULT_STATUSES = [
-  { label: 'Applied', color: '#c7d2fe' },
-  { label: 'CV Screening', color: '#bbf7d0' },
-  { label: 'Interview', color: '#bae6fd' },
+  { label: 'Pending', color: '#fef08a' },
+  { label: 'Review', color: '#bae6fd' },
+  { label: 'Interview', color: '#93c5fd' },
   { label: 'Offered', color: '#bbf7d0' },
+  { label: 'Rejected', color: '#fecaca' },
 ]
 
 function getAutoTextColorFromHex(hex) {
+  // ... (Keep your existing getAutoTextColorFromHex logic exactly the same)
   if (!hex || hex.length < 7) return '#1e293b'
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -33,6 +36,7 @@ function getAutoTextColorFromHex(hex) {
 }
 
 function ColorPicker({ value, onChange, presets = [] }) {
+  // ... (Keep your existing ColorPicker component exactly the same)
   const canvasRef = useRef(null)
   const stripRef = useRef(null)
   const [hue, setHue] = useState(220)
@@ -149,34 +153,29 @@ function ColorPicker({ value, onChange, presets = [] }) {
 
 export default function TrackingDrawer({ mode, job, onSave, onClose }) {
   const isAdd = mode === 'add'
+  // Jika form memiliki ID, berarti ini lamaran resmi dari backend database
+  const isFromBackend = !isAdd && job?.id; 
   const drawerRef = useRef(null)
 
   const [form, setForm] = useState({
     id: job?.id || null,
     position: job?.position || '',
     company: job?.company || '',
-    dateApplied: job?.dateApplied || '',
-    status: job?.status || 'Applied',
+    dateApplied: job?.dateApplied?.split(' ')[0] || '', // Format YYYY-MM-DD
+    status: job?.status || 'Pending',
     type: job?.type || 'internship',
     workType: job?.workType || 'On-site',
     statuses: job?.statuses ? [...job.statuses] : [...DEFAULT_STATUSES],
-    currentStatusIdx: job?.statuses
-      ? Math.max(0, job.statuses.findIndex(s => s.label === job.status))
-      : 0,
   })
 
   const [newStatusLabel, setNewStatusLabel] = useState('')
   const [newStatusColor, setNewStatusColor] = useState('#c7d2fe')
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [activeColorIdx, setActiveColorIdx] = useState(null)
-
-  // history: default 4 warna status + hitam putih
-  // update HANYA saat add status baru
   const [colorHistory, setColorHistory] = useState([
     '#c7d2fe', '#bbf7d0', '#bae6fd', '#fef08a', '#ffffff', '#1e293b'
   ])
 
-  // close picker saat klik di luar drawer
   useEffect(() => {
     const handler = (e) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target)) {
@@ -193,7 +192,6 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
 
   const handleAddStatus = () => {
     if (!newStatusLabel.trim()) return
-    // update history HANYA di sini, saat add status
     setColorHistory(prev => {
       const filtered = prev.filter(c => c !== newStatusColor)
       return [newStatusColor, ...filtered].slice(0, 6)
@@ -211,11 +209,9 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
     setForm(prev => ({
       ...prev,
       statuses: prev.statuses.filter((_, i) => i !== idx),
-      currentStatusIdx: Math.min(prev.currentStatusIdx, Math.max(0, prev.statuses.length - 2)),
     }))
   }
 
-  // fix: hanya update index yang dipilih
   const handleStatusColorChange = (idx, color) => {
     setForm(prev => ({
       ...prev,
@@ -247,30 +243,44 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
         <button className="trkd__close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Badges */}
-      {!isAdd && (
-        <div className="trkd__badges">
-          <span className="trkd__badge trkd__badge--type">
-            {job?.type === 'mt' ? 'MT' : 'Internship'}
-          </span>
-          <span className="trkd__badge trkd__badge--work">{job?.workType}</span>
-          <span className="trkd__badge trkd__badge--status">{form.status}</span>
-        </div>
-      )}
-
       <div className="trkd__body">
+
+        {/* --- UPDATE: Current Status Selector --- */}
+        <div className="trkd__field">
+          <label className="trkd__label">Current Status</label>
+          <select 
+            className="trkd__input" 
+            style={{ padding: '8px', cursor: 'pointer' }}
+            value={form.status} 
+            onChange={handleChange('status')}
+          >
+            {form.statuses.map(s => (
+              <option key={s.label} value={s.label}>{s.label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Job Position + Company */}
         <div className="trkd__row">
           <div className="trkd__field">
             <label className="trkd__label">Job Position</label>
-            <input className="trkd__input" type="text"
-              value={form.position} onChange={handleChange('position')} />
+            <input 
+              className={`trkd__input ${isFromBackend ? 'trkd__input--disabled' : ''}`} 
+              type="text"
+              value={form.position} 
+              onChange={handleChange('position')}
+              disabled={isFromBackend} // Lock if from DB
+            />
           </div>
           <div className="trkd__field">
             <label className="trkd__label">Company</label>
-            <input className="trkd__input" type="text"
-              value={form.company} onChange={handleChange('company')} />
+            <input 
+              className={`trkd__input ${isFromBackend ? 'trkd__input--disabled' : ''}`} 
+              type="text"
+              value={form.company} 
+              onChange={handleChange('company')} 
+              disabled={isFromBackend} // Lock if from DB
+            />
           </div>
         </div>
 
@@ -278,13 +288,14 @@ export default function TrackingDrawer({ mode, job, onSave, onClose }) {
         <div className="trkd__field">
           <label className="trkd__label">Date Applied</label>
           <div className="trkd__date-wrap"
-            onClick={() => document.getElementById('trkd-date').showPicker()}>
+            onClick={() => { if(!isFromBackend) document.getElementById('trkd-date').showPicker() }}>
             <input
               id="trkd-date"
-              className={`trkd__input trkd__input--date${!form.dateApplied ? ' trkd__input--empty' : ''}`}
+              className={`trkd__input trkd__input--date ${!form.dateApplied ? 'trkd__input--empty' : ''} ${isFromBackend ? 'trkd__input--disabled' : ''}`}
               type="date"
               value={form.dateApplied}
               onChange={handleChange('dateApplied')}
+              disabled={isFromBackend} // Lock if from DB
             />
             <svg className="trkd__date-icon" width="15" height="15"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

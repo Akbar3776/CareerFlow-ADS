@@ -96,3 +96,14 @@ class MagangController:
         if error:
             return jsonify({"message": error}), 400 
         return jsonify({"message": "Status lamaran berhasil diperbarui"}), 200
+    
+    @staticmethod
+    def delete_lamaran(id):
+        if get_jwt().get('role') != 'mahasiswa':
+            return jsonify({"message": "Akses ditolak"}), 403
+
+        success, error = MagangService.delete_lamaran(id, get_jwt_identity())
+        if error:
+            return jsonify({"message": error}), 404 if "ditemukan" in error else 403
+            
+        return jsonify({"message": "Lamaran berhasil dihapus"}), 200

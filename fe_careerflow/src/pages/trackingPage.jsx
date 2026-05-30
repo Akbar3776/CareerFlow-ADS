@@ -1,29 +1,17 @@
+// trackingPage.jsx
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import TrackingDrawer from '../components/TrackingDrawer.jsx'
+import api from '../api' // Gunakan axios instance
 
-const SAMPLE_TRACKING = [
-  { id: 1, position: 'Senior Product Designer', company: 'TechFlow Systems', status: 'Interviewing', dateApplied: '2023-10-24', type: 'internship', workType: 'On-site', statuses: [
-    { label: 'Applied', color: '#c7d2fe' },
-    { label: 'CV Screening', color: '#bbf7d0' },
-    { label: 'Technical Test', color: '#bae6fd' },
-    { label: 'HR Interview', color: '#fef08a' },
-    { label: 'User Interview', color: '#d9f99d' },
-    { label: 'Interviewing', color: '#93c5fd' },
-    { label: 'Offered', color: '#bbf7d0' },
-  ]},
-  { id: 2, position: 'Frontend Engineer (Intern)', company: 'Global Nexus Corp', status: 'Pending', dateApplied: '2023-10-21', type: 'internship', workType: 'Remote', statuses: [
-    { label: 'Applied', color: '#c7d2fe' },
-    { label: 'Pending', color: '#fef08a' },
-  ]},
-  { id: 3, position: 'UX Researcher', company: 'Creative Solstice', status: 'Offered', dateApplied: '2023-10-15', type: 'mt', workType: 'On-site', statuses: [
-    { label: 'Applied', color: '#c7d2fe' },
-    { label: 'Offered', color: '#bbf7d0' },
-  ]},
-  { id: 4, position: 'Data Analyst Intern', company: 'FinTech Hub', status: 'Applied', dateApplied: '2023-10-12', type: 'internship', workType: 'Hybrid', statuses: [
-    { label: 'Applied', color: '#c7d2fe' },
-  ]},
+// Standarisasi status lamaran dan warnanya
+const DEFAULT_STATUSES = [
+  { label: 'Pending', color: '#fef08a' },
+  { label: 'Review', color: '#bae6fd' },
+  { label: 'Interview', color: '#93c5fd' },
+  { label: 'Offered', color: '#bbf7d0' },
+  { label: 'Rejected', color: '#fecaca' },
 ]
 
 function getAutoTextColorFromHex(hex) {
@@ -58,18 +46,69 @@ function formatDate(dateStr) {
 
 export default function TrackingPage() {
   const navigate = useNavigate()
-  const [jobs, setJobs] = useState(SAMPLE_TRACKING)
+  const [jobs, setJobs] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [userProfile, setUserProfile] = useState({ name: 'Loading...', role: 'Mahasiswa' })
+  
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerMode, setDrawerMode] = useState('edit')
   const [activeJob, setActiveJob] = useState(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const drawerRef = useRef(null)
 
+  // 1. Fetch Profile and Dashboard Data on Mount
+  useEffect(() => {
+    const fetchTrackingData = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      try {
+        // Fetch Profile
+        const profileRes = await api.get('/profile')
+        setUserProfile({ 
+          name: profileRes.data.nama || profileRes.data.name || 'Mahasiswa', 
+          role: profileRes.data.role || 'Mahasiswa' 
+        })
+
+        // Fetch Dashboard Lamaran
+        const dashboardRes = await api.get('/mahasiswa/dashboard')
+        
+        // Map backend data format to match the frontend table
+        const mappedJobs = dashboardRes.data.map(lamaran => ({
+          id: lamaran.idLamaran,
+          position: lamaran.title,
+          company: lamaran.company,
+          status: lamaran.statusLamaran || 'Pending',
+          dateApplied: lamaran.tanggalApply,
+          statuses: DEFAULT_STATUSES // Memasukkan default status untuk siklus badge
+        }))
+
+        setJobs(mappedJobs)
+
+      } catch (err) {
+        console.error("Error fetching tracking data:", err)
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          navigate('/login')
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTrackingData()
+  }, [navigate])
+
   const totalApplied = jobs.length
   const totalOffered = jobs.filter(j =>
-    j.statuses?.some(s => s.label.toLowerCase().includes('offer'))
+    j.status?.toLowerCase().includes('offer')
   ).length
 
+  // Handle outside click for Drawer
   useEffect(() => {
     const handler = (e) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target)) {
@@ -86,9 +125,19 @@ export default function TrackingPage() {
     setDrawerOpen(true)
   }
 
-  const handleDelete = (id) => {
+const handleDelete = async (id) => {
     if (window.confirm('Hapus tracking ini?')) {
-      setJobs(prev => prev.filter(j => j.id !== id))
+      try {
+        // Panggil backend DELETE endpoint
+        await api.delete(`/lamaran/${id}`);
+        
+        // Hapus dari state lokal setelah sukses di backend
+        setJobs(prev => prev.filter(j => j.id !== id));
+      } catch (err) {
+        console.error("Gagal menghapus lamaran:", err);
+        const errorMsg = err.response?.data?.message || 'Terjadi kesalahan jaringan.';
+        alert(`Gagal menghapus: ${errorMsg}`);
+      }
     }
   }
 
@@ -98,28 +147,52 @@ export default function TrackingPage() {
     setDrawerOpen(true)
   }
 
-  const handleSave = (data) => {
+  const handleSave = async (data) => {
     if (drawerMode === 'add') {
-      setJobs(prev => [...prev, { ...data, id: Date.now() }])
+      // Local addition for custom external jobs (no backend yet)
+      setJobs(prev => [...prev, { ...data, id: Date.now(), statuses: data.statuses }]);
+      setDrawerOpen(false);
     } else {
-      setJobs(prev => prev.map(j => j.id === data.id ? data : j))
+      // Backend update for existing jobs
+      try {
+        // Only the status string goes to the backend Lamaran table
+        await api.put(`/lamaran/${data.id}/status`, { statusLamaran: data.status });
+        
+        // Update local state to reflect the new status (and any custom color pipelines)
+        setJobs(prev => prev.map(j => j.id === data.id ? data : j));
+        setDrawerOpen(false);
+      } catch (err) {
+        console.error("Gagal update status dari drawer:", err);
+        alert("Gagal menyimpan perubahan. Periksa jaringan Anda.");
+      }
     }
-    setDrawerOpen(false)
   }
 
-  const handleCycleStatusDirect = (job) => {
-    setJobs(prev => prev.map(j => {
-      if (j.id !== job.id) return j
-      const currentIdx = j.statuses.findIndex(s => s.label === j.status)
-      const nextIdx = (currentIdx === -1 ? 0 : currentIdx + 1) % j.statuses.length
-      return { ...j, status: j.statuses[nextIdx].label }
-    }))
+  // 2. Integrasi Update Status via API
+  const handleCycleStatusDirect = async (job) => {
+    const currentIdx = job.statuses.findIndex(s => s.label.toLowerCase() === job.status.toLowerCase())
+    const nextIdx = (currentIdx === -1 ? 0 : currentIdx + 1) % job.statuses.length
+    const nextStatus = job.statuses[nextIdx].label
+
+    try {
+      // Panggil backend API PUT /lamaran/<id>/status
+      await api.put(`/lamaran/${job.id}/status`, { statusLamaran: nextStatus })
+      
+      // Update state lokal jika sukses
+      setJobs(prev => prev.map(j => {
+        if (j.id !== job.id) return j
+        return { ...j, status: nextStatus }
+      }))
+    } catch (err) {
+      console.error("Gagal update status:", err)
+      alert("Gagal memperbarui status. Periksa jaringan Anda.")
+    }
   }
 
   return (
     <div className="trk-wrapper">
       <Navbar
-        user={{ name: 'Andi Nasution', role: 'Member' }}
+        user={userProfile}
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
       />
@@ -142,70 +215,78 @@ export default function TrackingPage() {
             </div>
 
             <div className="trk-table-wrap">
-              <table className="trk-table">
-                <thead>
-                  <tr>
-                    <th>Job Position</th>
-                    <th>Company</th>
-                    <th>Status</th>
-                    <th>Date Applied</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobs.map(job => {
-                    const currentStatus = job.statuses?.find(s => s.label === job.status)
-                    const bgColor = currentStatus?.color || '#f1f5f9'
-                    const textColor = getAutoTextColorFromHex(bgColor)
-                    return (
-                      <tr key={job.id}>
-                        <td className="trk-table__position">{job.position}</td>
-                        <td className="trk-table__company">{job.company}</td>
-                        <td>
-                          <span
-                            className="trk-badge"
-                            style={{
-                              background: bgColor,
-                              color: textColor,
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                            }}
-                            onClick={() => handleCycleStatusDirect(job)}
-                            title="Klik untuk next stage"
-                          >
-                            {job.status}
-                          </span>
-                        </td>
-                        <td className="trk-table__date">{formatDate(job.dateApplied)}</td>
-                        <td>
-                          <div className="trk-table__actions">
-                            <button
-                              className="trk-table__action-btn trk-table__action-btn--edit"
-                              onClick={() => handleEdit(job)}
+              {isLoading ? (
+                <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Memuat data tracking...</p>
+              ) : jobs.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Belum ada lamaran. Mulai explore lowongan!</p>
+              ) : (
+                <table className="trk-table">
+                  <thead>
+                    <tr>
+                      <th>Job Position</th>
+                      <th>Company</th>
+                      <th>Status</th>
+                      <th>Date Applied</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jobs.map(job => {
+                      // Temukan warna berdasarkan status yang cocok, default ke abu-abu muda jika tidak ada
+                      const currentStatus = job.statuses?.find(s => s.label.toLowerCase() === job.status.toLowerCase())
+                      const bgColor = currentStatus?.color || '#f1f5f9'
+                      const textColor = getAutoTextColorFromHex(bgColor)
+                      
+                      return (
+                        <tr key={job.id}>
+                          <td className="trk-table__position">{job.position}</td>
+                          <td className="trk-table__company">{job.company}</td>
+                          <td>
+                            <span
+                              className="trk-badge"
+                              style={{
+                                background: bgColor,
+                                color: textColor,
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                              }}
+                              onClick={() => handleCycleStatusDirect(job)}
+                              title="Klik untuk mengubah status"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
-                            </button>
-                            <button
-                              className="trk-table__action-btn trk-table__action-btn--delete"
-                              onClick={() => handleDelete(job.id)}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                <path d="M10 11v6M14 11v6"/>
-                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                              {job.status}
+                            </span>
+                          </td>
+                          <td className="trk-table__date">{formatDate(job.dateApplied)}</td>
+                          <td>
+                            <div className="trk-table__actions">
+                              <button
+                                className="trk-table__action-btn trk-table__action-btn--edit"
+                                onClick={() => handleEdit(job)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                              </button>
+                              <button
+                                className="trk-table__action-btn trk-table__action-btn--delete"
+                                onClick={() => handleDelete(job.id)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"/>
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                  <path d="M10 11v6M14 11v6"/>
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 

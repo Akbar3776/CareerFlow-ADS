@@ -90,3 +90,15 @@ class MagangService:
         lamaran.statusLamaran = status
         db.session.commit()
         return lamaran, None
+    
+    @staticmethod
+    def delete_lamaran(id_lamaran, nim_mahasiswa):
+        lamaran = Lamaran.query.get(id_lamaran)
+        if not lamaran:
+            return False, "Lamaran tidak ditemukan"
+        if lamaran.nimMahasiswa != nim_mahasiswa:
+            return False, "Anda tidak memiliki akses untuk menghapus lamaran ini"
+            
+        db.session.delete(lamaran)
+        db.session.commit()
+        return True, None

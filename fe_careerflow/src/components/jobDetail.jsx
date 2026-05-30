@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+// jobDetail.jsx
+import { useEffect, useState } from 'react' // Tambahkan useState
 
 const IconBuilding = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -72,7 +73,11 @@ const IconCalendar = () => (
   </svg>
 )
 
-export default function JobDetail({ job, onClose }) {
+// Tambahkan prop onApply di sini
+export default function JobDetail({ job, onClose, onApply }) {
+  // State untuk menyimpan file CV
+  const [cvFile, setCvFile] = useState(null)
+
   // Close on Escape key
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -82,18 +87,30 @@ export default function JobDetail({ job, onClose }) {
 
   if (!job) return null
 
+  // Fungsi untuk melamar secara internal (masuk ke database & Tracking Dashboard)
+  const handleInternalApply = () => {
+    if (!cvFile) {
+      alert("Mohon unggah dokumen CV Anda terlebih dahulu!");
+      return;
+    }
+    
+    // Buat dummy URL karena belum ada cloud storage
+    const dummyCvUrl = `https://storage.careerflow.com/cv/${cvFile.name.replace(/\s+/g, '-')}`;
+    
+    // Panggil fungsi onApply dari DashboardPage
+    onApply(job.id || job.idLowongan, dummyCvUrl);
+  }
+
+  // Fungsi untuk link eksternal perusahaan
   const handleDaftar = () => {
     if (job.applyUrl) window.open(job.applyUrl, '_blank', 'noopener noreferrer')
   }
 
   return (
     <>
-      {/* Backdrop — click outside closes panel */}
       <div className="db-detail-overlay" onClick={onClose} />
 
-      {/* Panel */}
       <div className="db-detail-panel" onClick={e => e.stopPropagation()}>
-
         {/* Header */}
         <div className="db-detail-panel__header">
           <div className="db-detail-panel__company-icon">
@@ -170,14 +187,42 @@ export default function JobDetail({ job, onClose }) {
           </>
         )}
 
+        {/* --- UPLOAD CV SECTION --- */}
+        <div className="db-detail-panel__divider" />
+        <div className="db-detail-panel__section-title">Persyaratan Lamaran</div>
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{
+            display: 'inline-block',
+            padding: '10px 16px',
+            background: 'var(--cf-bg)',
+            border: '1px dashed #cbd5e1',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            color: 'var(--cf-text)'
+          }}>
+            {cvFile ? `📄 ${cvFile.name}` : '+ Unggah CV (PDF)'}
+            <input 
+              type="file" 
+              accept=".pdf" 
+              hidden 
+              onChange={e => setCvFile(e.target.files[0])} 
+            />
+          </label>
+        </div>
+
         {/* Actions */}
         <div className="db-detail-panel__actions">
-          <button className="db-detail-panel__btn-primary" onClick={() => {}}>
+          {/* Tombol ini sekarang memanggil API Flask dan masuk ke Tracking */}
+          <button className="db-detail-panel__btn-primary" onClick={handleInternalApply}>
             <IconGrid /> Tambahkan ke Tracking Dashboard
           </button>
-          <button className="db-detail-panel__btn-secondary" onClick={handleDaftar}>
-            <IconSend /> Lamar Pekerjaan
-          </button>
+          
+          {job.applyUrl && (
+            <button className="db-detail-panel__btn-secondary" onClick={handleDaftar}>
+              <IconSend /> Lamar Pekerjaan (Eksternal)
+            </button>
+          )}
         </div>
 
       </div>

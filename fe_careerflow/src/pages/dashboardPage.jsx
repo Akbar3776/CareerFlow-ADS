@@ -1,3 +1,4 @@
+// dashboardPage.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
@@ -15,11 +16,11 @@ export default function DashboardPage() {
 
   // --- States for Backend Fetching ---
   const [jobs, setJobs] = useState([])
-  const [currentUser, setCurrentUser] = useState({ name: 'Loading...', role: '' }) // <-- New State
+  const [currentUser, setCurrentUser] = useState({ name: 'Loading...', role: '' })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
-// --- Fetch Data from Backend ---
+  // --- Fetch Data from Backend ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,7 +29,7 @@ export default function DashboardPage() {
         // Scenario 1: No token found in localStorage. Redirect immediately.
         if (!token) {
           navigate('/login'); 
-          return; // Stop execution
+          return; 
         }
         
         const headers = {
@@ -39,17 +40,21 @@ export default function DashboardPage() {
         // Fetch User Profile
         const profileRes = await fetch('http://localhost:5001/profile', { headers });
         
-        // Scenario 2: Token is expired or invalid (Backend returns 401 or 403)
+        // Scenario 2: Token is expired or invalid
         if (profileRes.status === 401 || profileRes.status === 422 || profileRes.status === 403) {
           console.error("Sesi telah habis. Mengalihkan ke halaman login...");
-          localStorage.removeItem('token'); // Clear the bad token
-          navigate('/login');               // Redirect to login page
+          localStorage.removeItem('token'); 
+          navigate('/login');               
           return;
         }
 
         if (profileRes.ok) {
           const profileData = await profileRes.json();
-          setCurrentUser(profileData);
+          // Fallback check to support 'nama' vs 'name'
+          setCurrentUser({
+            ...profileData,
+            name: profileData.nama || profileData.name || 'Mahasiswa'
+          });
         } else {
           throw new Error('Gagal mengambil profil pengguna');
         }
@@ -69,18 +74,49 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [navigate]); // <-- Add navigate to dependency array
+  }, [navigate]); 
+
+  // --- Handle Apply Action ---
+  const handleApply = async (jobId, cvDataUrl = 'link-to-cv-default.pdf') => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5001/lamaran', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          idLowongan: jobId,
+          dokumenCV: cvDataUrl // This maps to your backend's expected payload
+        })
+      });
+
+      if (response.ok) {
+        alert("Lamaran berhasil dikirim!");
+        setActiveJob(null);
+        // Route the student directly to the tracking page
+        navigate('/tracking'); 
+      } else {
+        const errData = await response.json();
+        alert(`Gagal melamar: ${errData.message}`);
+      }
+    } catch (err) {
+      console.error("Error applying for job:", err);
+      alert("Terjadi kesalahan jaringan saat mengirim lamaran.");
+    }
+  };
 
   /* Filter + search logic */
   const filteredJobs = jobs.filter(job => {
     const matchSearch = searchQuery === '' ||
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase())
+      job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.company?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchFilter = selectedFilters.length === 0 ||
       selectedFilters.some(f =>
-        job.title.toLowerCase().includes(f.toLowerCase()) ||
-        job.company.toLowerCase().includes(f.toLowerCase())
+        job.title?.toLowerCase().includes(f.toLowerCase()) ||
+        job.company?.toLowerCase().includes(f.toLowerCase())
       )
 
     return matchSearch && matchFilter
@@ -88,14 +124,12 @@ export default function DashboardPage() {
 
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh', background: 'var(--cf-bg)' }}>
-      {/* Pass dynamic user data here */}
       <Navbar
         user={currentUser} 
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
       />
 
-      {/* Pass dynamic user name here */}
       <Hero
         userName={currentUser.name} 
         searchQuery={searchQuery}
@@ -139,6 +173,7 @@ export default function DashboardPage() {
         <JobDetail
           job={activeJob}
           onClose={() => setActiveJob(null)}
+          onApply={handleApply} // Pass the new function down as a prop
         />
       )}
     </div>
