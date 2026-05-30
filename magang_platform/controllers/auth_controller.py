@@ -76,3 +76,21 @@ class AuthController:
             return jsonify({"message": "User tidak ditemukan"}), 404
             
         return jsonify(profile), 200
+
+    @staticmethod
+    @jwt_required()
+    def update_profile():
+        from validators.validator import validate_profile_update_data
+        user_id = get_jwt_identity()
+        role = get_jwt().get('role')
+        data = request.json
+        is_valid, msg = validate_profile_update_data(data)
+        if not is_valid:
+            return jsonify({"message": msg}), 400
+
+        # Password required if email is changed
+        password = data.get('password') if 'email' in data else None
+        updated_profile, error = AuthService.update_user_profile(user_id, role, data, password)
+        if error:
+            return jsonify({"message": error}), 400
+        return jsonify(updated_profile), 200

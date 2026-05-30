@@ -19,3 +19,4 @@ auth_bp.route('/forgot-password/reset', methods=['POST'])(AuthController.reset_p
 
 # Profile
 auth_bp.route('/profile', methods=['GET'])(jwt_required()(AuthController.get_profile))
+auth_bp.route('/profile', methods=['PUT'])(jwt_required()(AuthController.update_profile))

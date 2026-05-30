@@ -1,13 +1,15 @@
-import { useState, useRef } from 'react'
+
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Pencil, Info, KeyRound, X } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
+import api from '../api'
 
 const DEFAULT_USER = {
-  name: 'Andi Nasution',
-  username: 'andinasution',
-  email: 'andi@email.com',
-  bio: 'Senior Project Manager with 8+ years of experience leading cross-functional teams in tech environments. Passionate about professional growth and digital transformation.',
+  name: '',
+  username: '',
+  email: '',
+  bio: '',
   photo: null,
 }
 
@@ -15,16 +17,50 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
+
   const [profileOpen, setProfileOpen] = useState(false)
   const [form, setForm] = useState({ ...DEFAULT_USER })
   const [savedForm, setSavedForm] = useState({ ...DEFAULT_USER })
   const [photoPreview, setPhotoPreview] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   // email change state
   const [showEmailConfirm, setShowEmailConfirm] = useState(false)
   const [showEmailInline, setShowEmailInline] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  // Fetch profile on mount
+  useEffect(() => {
+    setLoading(true)
+    setError('')
+    api.get('/profile')
+      .then(res => {
+        // Map backend fields to frontend state
+        setForm(f => ({
+          ...f,
+          name: res.data.name || '',
+          username: res.data.username || '',
+          email: res.data.email || '',
+          bio: res.data.bio || '',
+          photo: res.data.photo || null,
+        }))
+        setSavedForm(f => ({
+          ...f,
+          name: res.data.name || '',
+          username: res.data.username || '',
+          email: res.data.email || '',
+          bio: res.data.bio || '',
+          photo: res.data.photo || null,
+        }))
+        if (res.data.photo) setPhotoPreview(res.data.photo)
+      })
+      .catch(err => {
+        setError('Gagal memuat profil. Silakan login ulang.')
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const handlePhotoClick = () => fileInputRef.current?.click()
 
@@ -43,9 +79,36 @@ export default function ProfilePage() {
   const handleChange = (field) => (e) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }))
 
-  const handleSave = () => {
-    setSavedForm({ ...form })
-    alert('Perubahan berhasil disimpan!')
+
+  const handleSave = async () => {
+    setLoading(true)
+    setError('')
+    setSuccess('')
+    try {
+      // Prepare payload
+      let payload = {
+        nama: form.name,
+        username: form.username,
+        bio: form.bio,
+      }
+      if (form.email !== savedForm.email) {
+        payload.email = form.email
+        payload.password = confirmPassword // required for email change
+      }
+      // Optionally handle photo (not implemented: file upload)
+      // if (photoPreview && photoPreview !== form.photo) payload.photo = photoPreview
+
+      const res = await api.put('/profile', payload)
+      setSavedForm({ ...form })
+      setSuccess('Perubahan berhasil disimpan!')
+      setShowEmailInline(false)
+      setConfirmPassword('')
+      setNewEmail('')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal menyimpan perubahan')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDiscard = () => {
@@ -73,9 +136,7 @@ export default function ProfilePage() {
   const handleEmailInlineConfirm = () => {
     if (!newEmail.trim() || !confirmPassword.trim()) return
     setForm(prev => ({ ...prev, email: newEmail }))
-    setShowEmailInline(false)
-    setNewEmail('')
-    setConfirmPassword('')
+    // Do not close inline, let handleSave handle it
   }
 
   return (
@@ -94,6 +155,10 @@ export default function ProfilePage() {
         hidden
         onChange={handlePhotoChange}
       />
+
+      {/* Error/Success messages */}
+      {error && <div className="prf-alert prf-alert--error">{error}</div>}
+      {success && <div className="prf-alert prf-alert--success">{success}</div>}
 
       {/* Email confirm popup overlay */}
       {showEmailConfirm && (
@@ -264,11 +329,11 @@ export default function ProfilePage() {
 
         {/* Actions */}
         <div className="prf-actions">
-          <button className="prf-actions__discard" onClick={handleDiscard}>
+          <button className="prf-actions__discard" onClick={handleDiscard} disabled={loading}>
             Discard Changes
           </button>
-          <button className="prf-actions__save" onClick={handleSave}>
-            Save Changes
+          <button className="prf-actions__save" onClick={handleSave} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 

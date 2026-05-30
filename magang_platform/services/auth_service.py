@@ -107,3 +107,39 @@ class AuthService:
             return {"name": getattr(user, 'nama', 'Mahasiswa'), "role": "Mahasiswa"} if user else None
             
         return None
+
+    @staticmethod
+    def update_user_profile(user_id, role, data, password=None):
+        # Only allow updating own profile
+        if role == 'admin':
+            user = Admin.query.get(user_id)
+        elif role == 'mahasiswa':
+            user = Mahasiswa.query.filter_by(nim=user_id).first()
+        else:
+            return None, "Role tidak valid"
+        if not user:
+            return None, "User tidak ditemukan"
+
+        # Email change: require password confirmation and check uniqueness
+        if 'email' in data and data['email'] != user.email:
+            if not password or not check_password_hash(user.password, password):
+                return None, "Password salah untuk konfirmasi email"
+            # Check if email is already taken
+            if Admin.query.filter_by(email=data['email']).first() or Mahasiswa.query.filter_by(email=data['email']).first():
+                return None, "Email sudah digunakan"
+            user.email = data['email']
+
+        # Update other fields
+        if 'nama' in data:
+            user.nama = data['nama']
+        if 'username' in data and hasattr(user, 'username'):
+            user.username = data['username']
+        if 'bio' in data and hasattr(user, 'bio'):
+            user.bio = data['bio']
+        # Optionally handle photo
+        if 'photo' in data and hasattr(user, 'photo'):
+            user.photo = data['photo']
+
+        db.session.commit()
+        # Return updated profile (reuse get_user_profile for consistency)
+        return AuthService.get_user_profile(user_id, role), None

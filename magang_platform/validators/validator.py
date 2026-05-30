@@ -24,3 +24,10 @@ def validate_lowongan_data(data):
         'kuota'
     ]
     return validate_required_fields(data, required)
+
+
+# Profile update validator
+def validate_profile_update_data(data):
+    # You can adjust required fields as needed (e.g., allow partial updates)
+    required = ['nama', 'email']
+    return validate_required_fields(data, required)
