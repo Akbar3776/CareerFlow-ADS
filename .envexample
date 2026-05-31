@@ -1,0 +1,5 @@
+DB_USER={Isi dengan username database Anda}
+DB_PASSWORD={Isi dengan password database Anda}
+DB_NAME={Isi dengan nama database Anda}
+DATABASE_URL=postgresql://{DB_USER}:{DB_PASSWORD}@db:5432/{DB_NAME}
+JWT_SECRET_KEY=careerflow-secret-key
