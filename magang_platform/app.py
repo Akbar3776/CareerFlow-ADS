@@ -13,11 +13,11 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    FRONTEND_URL = os.getenv("FRONTEND_URL")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3001")
     # Configure CORS to allow requests from your React frontend
     CORS(
     app,
-    resources={r"/*": {"origins": [FRONTEND_URL]}},
+    resources={r"/*": {"origins": [FRONTEND_URL, "http://localhost:3001"]}},
     supports_credentials=True
     )
 
