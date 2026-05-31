@@ -24,56 +24,38 @@ export default function AdminDashboardPage() {
   // New state for dynamic user profile
   const [userProfile, setUserProfile]         = useState({ name: 'Loading...', role: 'Admin' })
 
-// 1. Fetch Profile and Jobs on mount
+  // 1. Fetch Profile and Jobs on mount
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token');
 
-        // Fetch User Profile (Requires Token)
-        if (token) {
-          // NOTE: Double check if your backend prefix is /profile or /auth/profile
-          const profileResponse = await api.get('/profile', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json()
-            setUserProfile({ 
-              name: profileData.nama || profileData.name || 'Admin', 
-              role: profileData.role || 'Admin' 
-            })
-          } else {
-            console.error(`Gagal mengambil profil admin. Status: ${profileResponse.status}`)
-            // Fallback so UI doesn't get stuck on Loading
-            setUserProfile({ name: 'Admin', role: 'Admin' }) 
-          }
-        } else {
-          console.warn("Token tidak ditemukan di localStorage. Harap login kembali.")
-          setUserProfile({ name: 'Admin', role: 'Admin' }) 
-        }
+        // Fetch both requests in parallel
+        const [profileRes, jobsRes] = await Promise.all([
+          api.get('/profile', { headers: { Authorization: `Bearer ${token}` } }),
+          api.get('/lowongan')
+        ]);
 
-        // Fetch Jobs List
-        const jobsResponse = await api.get('/lowongan');
-        if (jobsResponse.ok) {
-          const jobsData = await jobsResponse.json()
-          setJobs(jobsData)
-        } else {
-          console.error("Gagal mengambil data lowongan dari server")
-        }
+        // Axios puts data in .data
+        const profileData = profileRes.data;
+        setUserProfile({ 
+          name: profileData.nama || profileData.name || 'Admin', 
+          role: profileData.role || 'Admin' 
+        });
+
+        setJobs(jobsRes.data);
 
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
-        setUserProfile({ name: 'Admin', role: 'Admin' }) // Fallback on network crash
+        console.error("Dashboard Fetch Error:", error.response?.data || error.message);
+        // Fallback
+        setUserProfile({ name: 'Admin', role: 'Admin' });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchDashboardData()
-  }, [])
+    fetchDashboardData();
+  }, []);
 
   // 2. Filter logic
   const filteredJobs = jobs.filter(job => {
