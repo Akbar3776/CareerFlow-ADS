@@ -88,33 +88,24 @@ export default function AdminDashboardPage() {
   // 3. Delete job via backend API
   const handleConfirmHapus = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('token');
 
-      const response = await api.delete(
-        `/admin/lowongan/${confirmJob.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      // Axios returns the response object directly; check status code
+      await api.delete(`/admin/lowongan/${confirmJob.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      if (response.ok) {
-        // Hapus dari state lokal setelah sukses di backend
-        setJobs(prev => prev.filter(j => j.id !== confirmJob.id))
-        setConfirmJob(null)
-        showToast()
-      } else {
-        const errorData = await response.json()
-        alert(`Gagal menghapus: ${errorData.message}`)
-        setConfirmJob(null)
-      }
+      // If no error was thrown, the request succeeded (status 2xx)
+      setJobs(prev => prev.filter(j => j.id !== confirmJob.id));
+      setConfirmJob(null);
+      showToast();
+
     } catch (error) {
-      console.error("Error deleting job:", error)
-      alert("Terjadi kesalahan jaringan.")
-      setConfirmJob(null)
+      console.error("Error deleting job:", error.response?.data || error.message);
+      alert(`Gagal menghapus: ${error.response?.data?.message || 'Terjadi kesalahan jaringan.'}`);
+      setConfirmJob(null);
     }
-  }
+  };
   
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh', background: 'var(--cf-bg)' }}>
