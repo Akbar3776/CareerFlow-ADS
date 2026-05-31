@@ -1,7 +1,7 @@
 // adminjobformPage.jsx
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Navbar from '../components/Navbar.jsx'
+import Navbar from '../components/navbar.jsx'
 import countryList from 'react-select-country-list'
 import { ChevronDown } from 'lucide-react'
 import api from '../api' // Gunakan axios instance yang sudah ada

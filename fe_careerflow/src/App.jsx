@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.scss'
-import LoginPage from './pages/LoginPage.jsx'
-import SignUpPage from './pages/SignUpPage.jsx'
-import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
-import DashboardPage from './pages/DashboardPage.jsx'
+import LoginPage from './pages/loginPage.jsx'
+import SignUpPage from './pages/signupPage.jsx'
+import ForgotPasswordPage from './pages/forgotpasswordPage.jsx'
+import DashboardPage from './pages/dashboardPage.jsx'
 import AdminDashboardPage from './pages/admindashboardPage.jsx'
 import AdminJobFormPage from './pages/adminjobformPage.jsx'
-import TrackingPage from './pages/TrackingPage.jsx'
-import ProfilePage from './pages/ProfilePage.jsx'
+import TrackingPage from './pages/trackingPage.jsx'
+import ProfilePage from './pages/profilePage.jsx'
 
 export default function App() {
   return (

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Pencil, Info, KeyRound, X } from 'lucide-react'
-import Navbar from '../components/Navbar.jsx'
+import Navbar from '../components/navbar.jsx'
 import api from '../api'
 
 const DEFAULT_USER = {

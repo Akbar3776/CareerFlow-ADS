@@ -1,0 +1,43 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: careerflow-db
+    environment:
+      # Docker pulls these values directly from your .env file
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: 
+      context: ./magang_platform # Make sure this matches your backend folder name
+    container_name: careerflow-backend
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      # Docker pulls these values directly from your .env file
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      - db
+
+  # 3. React Frontend Service
+  frontend:
+    build: 
+      context: ./fe_careerflow # Make sure this matches your frontend folder name
+    container_name: careerflow-frontend
+    ports:
+      - "3001:80" # Maps localhost:3001 to the container's port 80
+    depends_on:
+      - backend
+
+volumes:
+  pgdata: # This keeps your database data from deleting when the container stops

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import ProfileDropdown from './ProfileDropdown.jsx'
+import ProfileDropdown from './profiledropdown.jsx'
 
 const IconChevron = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import bgImage from '../assets/bg.png'
-import FilterDropdown from './FilterDropdown.jsx'
+import FilterDropdown from './filterdropdown.jsx'
 
 
 const IconChevron = () => (

@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlusCircle, CheckCircle } from 'lucide-react'
-import Navbar from '../components/Navbar.jsx'
-import Hero from '../components/Hero.jsx'
-import JobCard from '../components/JobCard.jsx'
-import ConfirmModal from '../components/ConfirmModal.jsx'
+import Navbar from '../components/navbar.jsx'
+import Hero from '../components/hero.jsx'
+import JobCard from '../components/jobcard.jsx'
+import ConfirmModal from '../components/confirmmodal.jsx'
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate()

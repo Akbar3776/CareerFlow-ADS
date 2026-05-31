@@ -1,10 +1,10 @@
 // dashboardPage.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from '../components/Navbar.jsx'
-import Hero from '../components/Hero.jsx'
-import JobCard from '../components/JobCard.jsx'
-import JobDetail from '../components/JobDetail.jsx'
+import Navbar from '../components/navbar.jsx'
+import Hero from '../components/hero.jsx'
+import JobCard from '../components/jobcard.jsx'
+import JobDetail from '../components/jobDetail.jsx'
 
 export default function DashboardPage() {
   const navigate = useNavigate();

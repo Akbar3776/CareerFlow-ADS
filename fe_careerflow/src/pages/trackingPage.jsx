@@ -1,8 +1,8 @@
 // trackingPage.jsx
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from '../components/Navbar.jsx'
-import TrackingDrawer from '../components/TrackingDrawer.jsx'
+import Navbar from '../components/navbar.jsx'
+import TrackingDrawer from '../components/trackingdrawer.jsx'
 import api from '../api' // Gunakan axios instance
 
 // Standarisasi status lamaran dan warnanya
