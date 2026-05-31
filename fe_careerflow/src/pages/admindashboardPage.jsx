@@ -6,6 +6,7 @@ import Navbar from '../components/navbar.jsx'
 import Hero from '../components/hero.jsx'
 import JobCard from '../components/jobcard.jsx'
 import ConfirmModal from '../components/confirmmodal.jsx'
+import api from '../api';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
@@ -32,11 +33,11 @@ export default function AdminDashboardPage() {
         // Fetch User Profile (Requires Token)
         if (token) {
           // NOTE: Double check if your backend prefix is /profile or /auth/profile
-          const profileResponse = await fetch('http://localhost:5001/profile', {
+          const profileResponse = await api.get('/profile', {
             headers: {
-              'Authorization': `Bearer ${token}`
+              Authorization: `Bearer ${token}`
             }
-          })
+          });
           
           if (profileResponse.ok) {
             const profileData = await profileResponse.json()
@@ -55,7 +56,7 @@ export default function AdminDashboardPage() {
         }
 
         // Fetch Jobs List
-        const jobsResponse = await fetch('http://localhost:5001/lowongan')
+        const jobsResponse = await api.get('/lowongan');
         if (jobsResponse.ok) {
           const jobsData = await jobsResponse.json()
           setJobs(jobsData)
@@ -107,13 +108,14 @@ export default function AdminDashboardPage() {
     try {
       const token = localStorage.getItem('token')
 
-      const response = await fetch(`http://localhost:5001/admin/lowongan/${confirmJob.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await api.delete(
+        `/admin/lowongan/${confirmJob.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      })
+      );
 
       if (response.ok) {
         // Hapus dari state lokal setelah sukses di backend

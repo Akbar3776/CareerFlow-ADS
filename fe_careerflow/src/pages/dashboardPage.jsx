@@ -5,6 +5,7 @@ import Navbar from '../components/navbar.jsx'
 import Hero from '../components/hero.jsx'
 import JobCard from '../components/jobcard.jsx'
 import JobDetail from '../components/jobDetail.jsx'
+import api from '../api';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -38,7 +39,11 @@ export default function DashboardPage() {
         };
 
         // Fetch User Profile
-        const profileRes = await fetch('http://localhost:5001/profile', { headers });
+        const profileRes = await api.get('/profile', {
+          headers
+        });
+
+        const profileData = profileRes.data;
         
         // Scenario 2: Token is expired or invalid
         if (profileRes.status === 401 || profileRes.status === 422 || profileRes.status === 403) {
@@ -60,10 +65,11 @@ export default function DashboardPage() {
         }
 
         // Fetch Jobs
-        const jobsRes = await fetch('http://localhost:5001/lowongan', { headers });
-        if (!jobsRes.ok) throw new Error('Gagal mengambil data lowongan');
-        
-        const jobsData = await jobsRes.json();
+        const jobsRes = await api.get('/lowongan', {
+          headers
+        });
+
+        const jobsData = jobsRes.data;
         setJobs(jobsData);
 
       } catch (err) {
@@ -80,7 +86,7 @@ export default function DashboardPage() {
   const handleApply = async (jobId, cvDataUrl = 'link-to-cv-default.pdf') => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/lamaran', {
+      const response = await fetch(`${API_URL}/lamaran`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +94,7 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({
           idLowongan: jobId,
-          dokumenCV: cvDataUrl // This maps to your backend's expected payload
+          dokumenCV: cvDataUrl
         })
       });
 
