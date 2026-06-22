@@ -146,7 +146,7 @@ Layanan yang aktif:
 
 ---
 
-## Reference Endpoint (Ringkas)
+## Reference Endpoint
 - Auth:
   - `POST /signup`
   - `POST /login`
@@ -168,4 +168,15 @@ Layanan yang aktif:
   - `POST /admin/lowongan`
   - `PUT /admin/lowongan/<id>`
   - `DELETE /admin/lowongan/<id>`
+
+ ---
+ 
+## Tim Pengembang
+
+| Nama                       | NIM           | Peran                                          |
+| -------------------------- | ------------- | ---------------------------------------------- |
+| _Muhammad Fauzan Akbar_    | _G6401231045_ | Integrator, Database, Deployment, Backend      |
+| _Hanifah Syahidah_         | _G6401231067_ | Frontend, UI & UX Designer                     |
+| _M Ibnu Fadhil_            | _G6401231073_ | Backend, Project Manager                       |
+
 
